@@ -10,7 +10,7 @@ NCP PostgreSQL 데이터베이스 설계를 기반으로 하는 도메인 모델
 erDiagram
     USER ||--|| USER_PREFERENCE : has
     USER ||--o{ USER_STOCK : owns
-    USER ||--o{ USER_SECTOR : interests
+    USER ||--o{ USER_INDUSTRY : interests
     USER ||--o{ USER_KEYWORD : filters
     USER ||--o{ BRIEFING : listens
     USER ||--o{ NOTIFICATION : receives
@@ -65,15 +65,16 @@ erDiagram
 
 ---
 
-### 4) UserSector (관심 산업 분야)
+### 4) UserIndustry (관심 산업 분야)
 - **설명**: 온보딩 시 선택한 관심 산업 카테고리 정보입니다.
-- **클래스명**: `com.komcast.be.domain.UserSector`
+- **클래스명**: `com.komcast.be.domain.UserIndustry`
 
 | 논리명 | 물리명(컬럼명) | Java 타입 | DB 타입 | 제약조건 | 비고 |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| 관심 섹터 ID | `id` | `Long` | `bigint` | PK, Auto Increment | |
+| 관심 산업 ID | `id` | `Long` | `bigint` | PK, Auto Increment | |
 | 사용자 ID | `user_id` | `Long` | `bigint` | FK | User 테이블 참조 |
-| 섹터 명칭 | `sector_name` | `String` | `varchar(50)` | Not Null | 예: `반도체`, `2차전지`, `금융` 등 |
+| 산업 코드 | `industry_code` | `String` | `varchar(20)` | Not Null | 예: `IND001`, `IND002` 등 |
+| 산업 명칭 | `industry_name` | `String` | `varchar(50)` | Nullable | 예: `반도체`, `2차전지`, `금융` 등 |
 
 ---
 
