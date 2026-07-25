@@ -15,7 +15,7 @@ public class PreferencesUpdateRequestDto {
     private String nickname;
     private List<String> portfolio;
     private List<String> interests;
-    private List<String> sectors;
+    private List<String> industries;
     private List<String> includeKeywords;
     private List<String> excludeKeywords;
     private String freeText;
