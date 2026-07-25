@@ -1,6 +1,7 @@
 package com.komcast.be.controller;
 
 import com.komcast.be.dto.ApiResponseDto;
+import com.komcast.be.dto.IndustryResponseDto;
 import com.komcast.be.dto.StockRegisterRequestDto;
 import com.komcast.be.dto.StockResponseDto;
 import com.komcast.be.service.StockService;
@@ -13,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@Tag(name = "02. Stocks & Sectors", description = "종목 및 산업 섹터 관리 API")
+@Tag(name = "02. Stocks & Industries", description = "종목 및 산업 분야 관리 API")
 @RestController
 @RequestMapping("/api/v1")
 @RequiredArgsConstructor
@@ -53,9 +54,9 @@ public class StockController {
         return ResponseEntity.ok(ApiResponseDto.success("Stock " + code + " removed from portfolio."));
     }
 
-    @Operation(summary = "전체 관심 섹터 카테고리 조회", description = "온보딩에서 선택 가능한 전체 관심 산업 분야 리스트를 반환합니다.")
-    @GetMapping("/sectors")
-    public ResponseEntity<List<String>> getAllSectors() {
-        return ResponseEntity.ok(stockService.getAllSectors());
+    @Operation(summary = "전체 관심 산업 분야 목록 조회", description = "온보딩에서 선택 가능한 전체 관심 산업 분야 리스트를 반환합니다.")
+    @GetMapping("/industries")
+    public ResponseEntity<List<IndustryResponseDto>> getAllIndustries() {
+        return ResponseEntity.ok(stockService.getAllIndustries());
     }
 }

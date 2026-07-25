@@ -2,8 +2,10 @@ package com.komcast.be.service;
 
 import com.komcast.be.domain.User;
 import com.komcast.be.domain.UserStock;
+import com.komcast.be.dto.IndustryResponseDto;
 import com.komcast.be.dto.StockRegisterRequestDto;
 import com.komcast.be.dto.StockResponseDto;
+import com.komcast.be.repository.UserRepository;
 import com.komcast.be.repository.UserStockRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -18,7 +20,7 @@ import java.util.stream.Collectors;
 public class StockService {
 
     private final UserStockRepository userStockRepository;
-    private final PreferenceService preferenceService;
+    private final UserRepository userRepository;
 
     private static final List<StockResponseDto> MASTER_STOCKS = List.of(
             new StockResponseDto("삼성전자", "005930", 73400, 1.2),
@@ -35,25 +37,36 @@ public class StockService {
             new StockResponseDto("KB금융", "105560", 78900, 0.6)
     );
 
-    private static final List<String> MASTER_SECTORS = List.of(
-            "반도체", "2차전지", "바이오/헬스케어", "금융", "AI/빅테크",
-            "자동차", "엔터테인먼트", "게임", "화학", "건설/부동산", "에너지", "소비재", "통신", "방산"
+    private static final List<IndustryResponseDto> MASTER_INDUSTRIES = List.of(
+            new IndustryResponseDto("IND001", "반도체"),
+            new IndustryResponseDto("IND002", "2차전지"),
+            new IndustryResponseDto("IND003", "바이오/헬스케어"),
+            new IndustryResponseDto("IND004", "금융"),
+            new IndustryResponseDto("IND005", "AI/빅테크"),
+            new IndustryResponseDto("IND006", "자동차"),
+            new IndustryResponseDto("IND007", "엔터테인먼트"),
+            new IndustryResponseDto("IND008", "게임"),
+            new IndustryResponseDto("IND009", "화학"),
+            new IndustryResponseDto("IND010", "건설/부동산"),
+            new IndustryResponseDto("IND011", "에너지"),
+            new IndustryResponseDto("IND012", "소비재"),
+            new IndustryResponseDto("IND013", "통신"),
+            new IndustryResponseDto("IND014", "방산")
     );
 
     public List<StockResponseDto> getAllStocks() {
         return MASTER_STOCKS;
     }
 
-    public List<String> getAllSectors() {
-        return MASTER_SECTORS;
+    public List<IndustryResponseDto> getAllIndustries() {
+        return MASTER_INDUSTRIES;
     }
 
     public List<StockResponseDto> getMyStocks(Long userId) {
-        User user = preferenceService.getOrCreateUser(userId);
+        User user = getOrCreateUser(userId);
         List<UserStock> userStocks = userStockRepository.findByUserId(user.getId());
 
         if (userStocks.isEmpty()) {
-            // 기본 종목이 없는 경우 샘플 등록
             return List.of(
                     new StockResponseDto("삼성전자", "005930", 73400, 1.2),
                     new StockResponseDto("SK하이닉스", "000660", 189000, 3.4)
@@ -71,7 +84,7 @@ public class StockService {
 
     @Transactional
     public void registerMyStock(Long userId, StockRegisterRequestDto dto) {
-        User user = preferenceService.getOrCreateUser(userId);
+        User user = getOrCreateUser(userId);
         userStockRepository.save(UserStock.builder()
                 .user(user)
                 .stockCode(dto.getCode())
@@ -81,7 +94,17 @@ public class StockService {
 
     @Transactional
     public void deleteMyStock(Long userId, String code) {
-        User user = preferenceService.getOrCreateUser(userId);
+        User user = getOrCreateUser(userId);
         userStockRepository.deleteByUserIdAndStockCode(user.getId(), code);
+    }
+
+    private User getOrCreateUser(Long userId) {
+        return userRepository.findById(userId).orElseGet(() ->
+                userRepository.save(User.builder()
+                        .id(userId)
+                        .nickname("민준")
+                        .plan("FREE")
+                        .build())
+        );
     }
 }

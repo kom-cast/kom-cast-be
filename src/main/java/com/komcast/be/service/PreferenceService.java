@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -18,8 +19,9 @@ public class PreferenceService {
     private final UserRepository userRepository;
     private final UserPreferenceRepository userPreferenceRepository;
     private final UserStockRepository userStockRepository;
-    private final UserSectorRepository userSectorRepository;
+    private final UserIndustryRepository userIndustryRepository;
     private final UserKeywordRepository userKeywordRepository;
+    private final StockService stockService;
 
     public PreferencesResponseDto getPreferences(Long userId) {
         User user = getOrCreateUser(userId);
@@ -29,8 +31,20 @@ public class PreferenceService {
                 .stream().map(UserStock::getStockCode).collect(Collectors.toList());
         List<String> interests = userStockRepository.findByUserIdAndType(user.getId(), "INTEREST")
                 .stream().map(UserStock::getStockCode).collect(Collectors.toList());
-        List<String> sectors = userSectorRepository.findByUserId(user.getId())
-                .stream().map(UserSector::getSectorName).collect(Collectors.toList());
+
+        Map<String, String> masterCodeToName = stockService.getAllIndustries().stream()
+                .collect(Collectors.toMap(IndustryResponseDto::getCode, IndustryResponseDto::getName, (a, b) -> a));
+
+        List<IndustryResponseDto> industries = userIndustryRepository.findByUserId(user.getId())
+                .stream().map(ui -> {
+                    String code = ui.getIndustryCode();
+                    String name = ui.getIndustryName() != null ? ui.getIndustryName() : masterCodeToName.getOrDefault(code, code);
+                    return IndustryResponseDto.builder()
+                            .code(code)
+                            .name(name)
+                            .build();
+                }).collect(Collectors.toList());
+
         List<String> includeKeywords = userKeywordRepository.findByUserIdAndType(user.getId(), "INCLUDE")
                 .stream().map(UserKeyword::getKeyword).collect(Collectors.toList());
         List<String> excludeKeywords = userKeywordRepository.findByUserIdAndType(user.getId(), "EXCLUDE")
@@ -40,7 +54,7 @@ public class PreferenceService {
                 .nickname(user.getNickname())
                 .portfolio(portfolio)
                 .interests(interests)
-                .sectors(sectors)
+                .industries(industries)
                 .includeKeywords(includeKeywords)
                 .excludeKeywords(excludeKeywords)
                 .freeText(pref.getFreeText())
@@ -79,12 +93,27 @@ public class PreferenceService {
             }
         }
 
-        if (dto.getSectors() != null) {
-            userSectorRepository.deleteByUserId(user.getId());
-            for (String sectorName : dto.getSectors()) {
-                userSectorRepository.save(UserSector.builder()
+        if (dto.getIndustries() != null) {
+            userIndustryRepository.deleteByUserId(user.getId());
+            Map<String, String> masterCodeToName = stockService.getAllIndustries().stream()
+                    .collect(Collectors.toMap(IndustryResponseDto::getCode, IndustryResponseDto::getName, (a, b) -> a));
+            Map<String, String> masterNameToCode = stockService.getAllIndustries().stream()
+                    .collect(Collectors.toMap(IndustryResponseDto::getName, IndustryResponseDto::getCode, (a, b) -> a));
+
+            for (String val : dto.getIndustries()) {
+                String code = val;
+                String name = val;
+                if (masterCodeToName.containsKey(val)) {
+                    code = val;
+                    name = masterCodeToName.get(val);
+                } else if (masterNameToCode.containsKey(val)) {
+                    code = masterNameToCode.get(val);
+                    name = val;
+                }
+                userIndustryRepository.save(UserIndustry.builder()
                         .user(user)
-                        .sectorName(sectorName)
+                        .industryCode(code)
+                        .industryName(name)
                         .build());
             }
         }
