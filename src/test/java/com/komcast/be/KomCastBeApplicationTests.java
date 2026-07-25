@@ -1,13 +1,12 @@
-package com.team5.komcast;
+package com.komcast.be;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class KomcastApplicationTests {
+class KomCastBeApplicationTests {
 
-	@Test
-	void contextLoads() {
-	}
-
+    @Test
+    void contextLoads() {
+    }
 }
