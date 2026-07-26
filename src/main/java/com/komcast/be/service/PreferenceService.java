@@ -157,6 +157,16 @@ public class PreferenceService {
         } catch (NumberFormatException ignored) {}
     }
 
+    public NotificationToggleRequestDto getNotificationSettings(Long userId) {
+        User user = getOrCreateUser(userId);
+        UserPreference pref = getOrCreatePreference(user);
+        return NotificationToggleRequestDto.builder()
+                .notifyBriefing(pref.getNotifyBriefing())
+                .notifyPriceAlert(pref.getNotifyPriceAlert())
+                .notifyMarketing(pref.getNotifyMarketing())
+                .build();
+    }
+
     @Transactional
     public void updateNotifications(Long userId, NotificationToggleRequestDto dto) {
         User user = getOrCreateUser(userId);
@@ -166,13 +176,13 @@ public class PreferenceService {
 
     @Transactional
     public User getOrCreateUser(Long userId) {
-        return userRepository.findById(userId).orElseGet(() ->
-                userRepository.save(User.builder()
-                        .id(userId)
+        return userRepository.findById(userId)
+                .or(() -> userRepository.findAll().stream().findFirst())
+                .orElseGet(() -> userRepository.save(User.builder()
                         .nickname("민준")
                         .plan("FREE")
                         .build())
-        );
+                );
     }
 
     @Transactional

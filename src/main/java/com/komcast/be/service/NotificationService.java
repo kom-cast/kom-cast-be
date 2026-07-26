@@ -22,11 +22,11 @@ public class NotificationService {
     @Transactional
     public List<NotificationResponseDto> getNotifications(Long userId) {
         User user = preferenceService.getOrCreateUser(userId);
-        List<Notification> notifications = notificationRepository.findByUserIdOrderByCreatedAtDesc(user.getId());
+        List<Notification> notifications = notificationRepository.findByUserIdOrderByIdDesc(user.getId());
 
         if (notifications.isEmpty()) {
             createDummyNotifications(user);
-            notifications = notificationRepository.findByUserIdOrderByCreatedAtDesc(user.getId());
+            notifications = notificationRepository.findByUserIdOrderByIdDesc(user.getId());
         }
 
         return notifications.stream()
@@ -51,7 +51,7 @@ public class NotificationService {
     @Transactional
     public void markAllAsRead(Long userId) {
         User user = preferenceService.getOrCreateUser(userId);
-        List<Notification> unreadList = notificationRepository.findByUserIdAndIsReadFalseOrderByCreatedAtDesc(user.getId());
+        List<Notification> unreadList = notificationRepository.findByUserIdAndIsReadFalseOrderByIdDesc(user.getId());
         for (Notification n : unreadList) {
             n.markAsRead();
         }
