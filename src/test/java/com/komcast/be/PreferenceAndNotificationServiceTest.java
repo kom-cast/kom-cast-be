@@ -1,0 +1,66 @@
+package com.komcast.be;
+
+import com.komcast.be.dto.NotificationResponseDto;
+import com.komcast.be.dto.NotificationToggleRequestDto;
+import com.komcast.be.dto.PreferencesResponseDto;
+import com.komcast.be.service.NotificationService;
+import com.komcast.be.service.PreferenceService;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+@SpringBootTest
+@Transactional
+class PreferenceAndNotificationServiceTest {
+
+    @Autowired
+    private PreferenceService preferenceService;
+
+    @Autowired
+    private NotificationService notificationService;
+
+    @Test
+    @DisplayName("알림 수신 동의 설정 변경이 DB에 정상 반영되어야 함")
+    void updateNotifications_updatesDBPreference() {
+        Long userId = 1L;
+
+        // 1. 알림 설정 변경 (notifyBriefing = false, notifyPriceAlert = false, notifyMarketing = true)
+        preferenceService.updateNotifications(userId, NotificationToggleRequestDto.builder()
+                .notifyBriefing(false)
+                .notifyPriceAlert(false)
+                .notifyMarketing(true)
+                .build());
+
+        // 2. 조회 및 검증
+        PreferencesResponseDto pref = preferenceService.getPreferences(userId);
+        assertThat(pref.getNotifyBriefing()).isFalse();
+        assertThat(pref.getNotifyPriceAlert()).isFalse();
+        assertThat(pref.getNotifyMarketing()).isTrue();
+    }
+
+    @Test
+    @DisplayName("알림 목록 조회 시 고정된 DB ID가 유지되어야 하며 읽음 처리가 반영되어야 함")
+    void getNotifications_maintainsConsistentIdsAndReadState() {
+        Long userId = 1L;
+
+        // 1. 첫 조회 시 DB에 저장 및 ID 부여
+        List<NotificationResponseDto> list1 = notificationService.getNotifications(userId);
+        assertThat(list1).isNotEmpty();
+        Long firstId = list1.get(0).getId();
+
+        // 2. 두 번째 조회 시에도 동일한 ID 유지
+        List<NotificationResponseDto> list2 = notificationService.getNotifications(userId);
+        assertThat(list2.get(0).getId()).isEqualTo(firstId);
+
+        // 3. 읽음 처리
+        notificationService.markAsRead(userId, firstId);
+        List<NotificationResponseDto> list3 = notificationService.getNotifications(userId);
+        assertThat(list3.stream().filter(n -> n.getId().equals(firstId)).findFirst().get().getUnread()).isFalse();
+    }
+}
