@@ -1,11 +1,11 @@
 package com.komcast.be.service;
 
 import com.komcast.be.domain.User;
+import com.komcast.be.domain.UserIndustry;
 import com.komcast.be.domain.UserStock;
-import com.komcast.be.dto.IndustryResponseDto;
-import com.komcast.be.dto.StockRegisterRequestDto;
-import com.komcast.be.dto.StockResponseDto;
+import com.komcast.be.dto.*;
 import com.komcast.be.repository.UserRepository;
+import com.komcast.be.repository.UserIndustryRepository;
 import com.komcast.be.repository.UserStockRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -20,6 +20,7 @@ import java.util.stream.Collectors;
 public class StockService {
 
     private final UserStockRepository userStockRepository;
+    private final UserIndustryRepository userIndustryRepository;
     private final UserRepository userRepository;
 
     private static final List<StockResponseDto> MASTER_STOCKS = List.of(
@@ -82,11 +83,31 @@ public class StockService {
     @Transactional
     public void registerMyStock(Long userId, StockRegisterRequestDto dto) {
         User user = getOrCreateUser(userId);
-        userStockRepository.save(UserStock.builder()
-                .user(user)
-                .stockCode(dto.getCode())
-                .type(dto.getType() != null ? dto.getType() : "PORTFOLIO")
-                .build());
+        if (!userStockRepository.existsByUserIdAndStockCode(user.getId(), dto.getCode())) {
+            userStockRepository.save(UserStock.builder()
+                    .user(user)
+                    .stockCode(dto.getCode())
+                    .type(dto.getType() != null ? dto.getType() : "PORTFOLIO")
+                    .build());
+        }
+    }
+
+    @Transactional
+    public void registerMyStocksBatch(Long userId, StockBatchRegisterRequestDto dto) {
+        User user = getOrCreateUser(userId);
+        if (dto.getCodes() != null && !dto.getCodes().isEmpty()) {
+            String type = dto.getType() != null ? dto.getType() : "PORTFOLIO";
+            Set<String> uniqueCodes = new LinkedHashSet<>(dto.getCodes());
+            for (String code : uniqueCodes) {
+                if (!userStockRepository.existsByUserIdAndStockCode(user.getId(), code)) {
+                    userStockRepository.save(UserStock.builder()
+                            .user(user)
+                            .stockCode(code)
+                            .type(type)
+                            .build());
+                }
+            }
+        }
     }
 
     @Transactional
@@ -95,13 +116,96 @@ public class StockService {
         userStockRepository.deleteByUserIdAndStockCode(user.getId(), code);
     }
 
-    private User getOrCreateUser(Long userId) {
-        return userRepository.findById(userId).orElseGet(() ->
-                userRepository.save(User.builder()
-                        .id(userId)
+    public List<IndustryResponseDto> getMyIndustries(Long userId) {
+        User user = getOrCreateUser(userId);
+        Map<String, String> masterCodeToName = MASTER_INDUSTRIES.stream()
+                .collect(Collectors.toMap(IndustryResponseDto::getCode, IndustryResponseDto::getName, (a, b) -> a));
+
+        return userIndustryRepository.findByUserId(user.getId())
+                .stream().map(ui -> {
+                    String code = ui.getIndustryCode();
+                    String name = ui.getIndustryName() != null ? ui.getIndustryName() : masterCodeToName.getOrDefault(code, code);
+                    return IndustryResponseDto.builder()
+                            .code(code)
+                            .name(name)
+                            .build();
+                }).collect(Collectors.toList());
+    }
+
+    @Transactional
+    public void registerMyIndustry(Long userId, IndustryRegisterRequestDto dto) {
+        User user = getOrCreateUser(userId);
+        Map<String, String> masterCodeToName = MASTER_INDUSTRIES.stream()
+                .collect(Collectors.toMap(IndustryResponseDto::getCode, IndustryResponseDto::getName, (a, b) -> a));
+        Map<String, String> masterNameToCode = MASTER_INDUSTRIES.stream()
+                .collect(Collectors.toMap(IndustryResponseDto::getName, IndustryResponseDto::getCode, (a, b) -> a));
+
+        String val = dto.getCode();
+        String code = val;
+        String name = val;
+        if (masterCodeToName.containsKey(val)) {
+            code = val;
+            name = masterCodeToName.get(val);
+        } else if (masterNameToCode.containsKey(val)) {
+            code = masterNameToCode.get(val);
+            name = val;
+        }
+
+        if (!userIndustryRepository.existsByUserIdAndIndustryCode(user.getId(), code)) {
+            userIndustryRepository.save(UserIndustry.builder()
+                    .user(user)
+                    .industryCode(code)
+                    .industryName(name)
+                    .build());
+        }
+    }
+
+    @Transactional
+    public void registerMyIndustriesBatch(Long userId, IndustryBatchRegisterRequestDto dto) {
+        User user = getOrCreateUser(userId);
+        if (dto.getCodes() != null && !dto.getCodes().isEmpty()) {
+            Map<String, String> masterCodeToName = MASTER_INDUSTRIES.stream()
+                    .collect(Collectors.toMap(IndustryResponseDto::getCode, IndustryResponseDto::getName, (a, b) -> a));
+            Map<String, String> masterNameToCode = MASTER_INDUSTRIES.stream()
+                    .collect(Collectors.toMap(IndustryResponseDto::getName, IndustryResponseDto::getCode, (a, b) -> a));
+
+            Set<String> uniqueCodes = new LinkedHashSet<>(dto.getCodes());
+            for (String val : uniqueCodes) {
+                String code = val;
+                String name = val;
+                if (masterCodeToName.containsKey(val)) {
+                    code = val;
+                    name = masterCodeToName.get(val);
+                } else if (masterNameToCode.containsKey(val)) {
+                    code = masterNameToCode.get(val);
+                    name = val;
+                }
+
+                if (!userIndustryRepository.existsByUserIdAndIndustryCode(user.getId(), code)) {
+                    userIndustryRepository.save(UserIndustry.builder()
+                            .user(user)
+                            .industryCode(code)
+                            .industryName(name)
+                            .build());
+                }
+            }
+        }
+    }
+
+    @Transactional
+    public void deleteMyIndustry(Long userId, String code) {
+        User user = getOrCreateUser(userId);
+        userIndustryRepository.deleteByUserIdAndIndustryCode(user.getId(), code);
+    }
+
+    @Transactional
+    public User getOrCreateUser(Long userId) {
+        return userRepository.findById(userId)
+                .or(() -> userRepository.findAll().stream().findFirst())
+                .orElseGet(() -> userRepository.save(User.builder()
                         .nickname("민준")
                         .plan("FREE")
                         .build())
-        );
+                );
     }
 }
