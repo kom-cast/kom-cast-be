@@ -5,10 +5,12 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class DurationUpdateRequestDto {
-    private String briefingDuration;
+public class IndustryBatchRegisterRequestDto {
+    private List<String> codes;
 }

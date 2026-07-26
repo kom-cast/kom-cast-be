@@ -9,6 +9,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class VoiceUpdateRequestDto {
-    private String voice;
+public class IndustryRegisterRequestDto {
+    private String code;
 }
