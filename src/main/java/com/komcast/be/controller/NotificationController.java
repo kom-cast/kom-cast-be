@@ -29,14 +29,14 @@ public class NotificationController {
         return ResponseEntity.ok(notificationService.getNotifications(userId));
     }
 
-    @Operation(summary = "알림 설정 단독 조회", description = "알림 수신 동의 상태만 단독 조회합니다.")
+    @Operation(summary = "알림 설정 조회", description = "알림 수신 동의 상태를 조회합니다.")
     @GetMapping("/settings")
     public ResponseEntity<NotificationToggleRequestDto> getNotificationSettings(
             @RequestHeader(value = "X-User-Id", defaultValue = "1") Long userId) {
         return ResponseEntity.ok(preferenceService.getNotificationSettings(userId));
     }
 
-    @Operation(summary = "알림 설정 단독 변경", description = "알림 수신 동의 상태만 단독 수정합니다.")
+    @Operation(summary = "알림 설정 변경", description = "알림 수신 동의 상태를 수정합니다.")
     @PatchMapping("/settings")
     public ResponseEntity<ApiResponseDto> updateNotificationSettings(
             @RequestHeader(value = "X-User-Id", defaultValue = "1") Long userId,

@@ -58,71 +58,6 @@ X-User-Id: 1
 }
 ```
 
-### 2) 온보딩/환경 설정 전체 저장 및 갱신 (`PUT /api/v1/preferences`)
-- **설명**: 온보딩 과정이 완료되었거나 설정 페이지에서 환경설정을 일괄적으로 변경하여 저장할 때 호출합니다.
-- **Request Header**: `X-User-Id: 1`
-- **Request Body (JSON)**:
-```json
-{
-  "nickname": "민준",
-  "portfolio": ["005930", "000660"],
-  "interests": ["005930", "035420"],
-  "industries": ["IND001", "IND005"],
-  "includeKeywords": ["반도체", "AI"],
-  "excludeKeywords": ["가십"],
-  "freeText": "반도체 위주로 대본을 생성해주세요.",
-  "briefingDuration": "15",
-  "voice": "sunghoon",
-  "notifyBriefing": true,
-  "notifyPriceAlert": true,
-  "notifyMarketing": true
-}
-```
-- **Response Body (JSON)**:
-  - **Status Code**: `200 OK`
-```json
-{
-  "status": "SUCCESS",
-  "message": "Preferences updated successfully."
-}
-```
-
-### 3) 브리핑 목소리 단건 변경 (`PATCH /api/v1/preferences/voice`)
-- **설명**: 마이페이지의 목소리 재설정 화면에서 성우 TTS 목소리를 변경할 때 호출합니다.
-- **Request Header**: `X-User-Id: 1`
-- **Request Body (JSON)**:
-```json
-{
-  "voice": "suyeon"
-}
-```
-- **Response Body (JSON)**:
-  - **Status Code**: `200 OK`
-```json
-{
-  "status": "SUCCESS",
-  "message": "Voice set to suyeon."
-}
-```
-
-### 4) 브리핑 재생 분량(Duration) 변경 (`PATCH /api/v1/preferences/briefing-duration`)
-- **설명**: 마이페이지의 브리핑 길이 재설정 화면에서 분량만 변경할 때 호출합니다. (시간대 변경 API는 제거됨)
-- **Request Header**: `X-User-Id: 1`
-- **Request Body (JSON)**:
-```json
-{
-  "briefingDuration": "15"
-}
-```
-- **Response Body (JSON)**:
-  - **Status Code**: `200 OK`
-```json
-{
-  "status": "SUCCESS",
-  "message": "Briefing duration updated to 15 minutes."
-}
-```
-
 ---
 
 ## 2. 관심/보유 종목 및 산업 분야 관리 (Stocks & Industries)
@@ -147,7 +82,7 @@ X-User-Id: 1
 ]
 ```
 
-### 3) 관심/보유 종목 추가 등록 - 단건 (`POST /api/v1/stocks/my`)
+### 3) 관심/보유 종목 등록 (`POST /api/v1/stocks/my`)
 - **Request Header**: `X-User-Id: 1`
 - **Request Body (JSON)**:
 ```json
@@ -165,7 +100,7 @@ X-User-Id: 1
 }
 ```
 
-### 4) 관심/보유 종목 추가 등록 - 일괄/배치 (`POST /api/v1/stocks/my/batch`)
+### 4) 관심/보유 종목 일괄 등록 (`POST /api/v1/stocks/my/batch`)
 - **설명**: 온보딩 UX 지원용으로 여러 종목 코드를 한 번에 일괄 등록합니다.
 - **Request Header**: `X-User-Id: 1`
 - **Request Body (JSON)**:
@@ -214,7 +149,7 @@ X-User-Id: 1
 ]
 ```
 
-### 8) 관심 산업 분야 추가 등록 - 단건 (`POST /api/v1/industries/my`)
+### 8) 관심 산업 분야 등록 (`POST /api/v1/industries/my`)
 - **Request Header**: `X-User-Id: 1`
 - **Request Body (JSON)**:
 ```json
@@ -231,7 +166,7 @@ X-User-Id: 1
 }
 ```
 
-### 9) 관심 산업 분야 추가 등록 - 일괄/배치 (`POST /api/v1/industries/my/batch`)
+### 9) 관심 산업 분야 일괄 등록 (`POST /api/v1/industries/my/batch`)
 - **설명**: 온보딩 UX 지원용으로 여러 산업 분야 코드를 한 번에 일괄 등록합니다.
 - **Request Header**: `X-User-Id: 1`
 - **Request Body (JSON)**:
@@ -304,7 +239,7 @@ X-User-Id: 1
 ]
 ```
 
-### 2) 알림 설정 단독 조회 (`GET /api/v1/notifications/settings`)
+### 2) 알림 설정 조회 (`GET /api/v1/notifications/settings`)
 - **Request Header**: `X-User-Id: 1`
 - **Response Body (JSON)**:
 ```json
@@ -315,7 +250,7 @@ X-User-Id: 1
 }
 ```
 
-### 3) 알림 설정 단독 수정 (`PATCH /api/v1/notifications/settings`)
+### 3) 알림 설정 수정 (`PATCH /api/v1/notifications/settings`)
 - **Request Header**: `X-User-Id: 1`
 - **Request Body (JSON)**:
 ```json

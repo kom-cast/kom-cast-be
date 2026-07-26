@@ -24,16 +24,16 @@ class Issue10ApiTest {
     private PreferenceService preferenceService;
 
     @Test
-    @DisplayName("관심 산업 단건 등록, 중복 방지 및 삭제 테스트")
+    @DisplayName("관심 산업 등록, 중복 방지 및 삭제 테스트")
     void myIndustrySingleCrudTest() {
         Long userId = 1L;
 
-        // 1. 단건 등록 1회차
+        // 1. 등록 1회차
         stockService.registerMyIndustry(userId, IndustryRegisterRequestDto.builder()
                 .code("IND001")
                 .build());
 
-        // 2. 동일 산업 단건 등록 2회차 (중복 시도)
+        // 2. 동일 산업 등록 2회차 (중복 시도)
         stockService.registerMyIndustry(userId, IndustryRegisterRequestDto.builder()
                 .code("IND001")
                 .build());
@@ -43,7 +43,7 @@ class Issue10ApiTest {
         assertThat(myIndustries.get(0).getCode()).isEqualTo("IND001");
         assertThat(myIndustries.get(0).getName()).isEqualTo("반도체");
 
-        // 3. 단건 삭제
+        // 3. 삭제
         stockService.deleteMyIndustry(userId, "IND001");
         assertThat(stockService.getMyIndustries(userId)).isEmpty();
     }
@@ -72,18 +72,18 @@ class Issue10ApiTest {
     }
 
     @Test
-    @DisplayName("알림 설정 단독 조회 및 단독 수정 테스트")
+    @DisplayName("알림 설정 조회 및 수정 테스트")
     void notificationSettingsTest() {
         Long userId = 1L;
 
-        // 1. 단독 수정
+        // 1. 수정
         preferenceService.updateNotifications(userId, NotificationToggleRequestDto.builder()
                 .notifyBriefing(true)
                 .notifyPriceAlert(false)
                 .notifyMarketing(true)
                 .build());
 
-        // 2. 단독 조회
+        // 2. 조회
         NotificationToggleRequestDto settings = preferenceService.getNotificationSettings(userId);
         assertThat(settings.getNotifyBriefing()).isTrue();
         assertThat(settings.getNotifyPriceAlert()).isFalse();

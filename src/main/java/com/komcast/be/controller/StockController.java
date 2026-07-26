@@ -32,7 +32,7 @@ public class StockController {
         return ResponseEntity.ok(stockService.getMyStocks(userId));
     }
 
-    @Operation(summary = "보유/관심 종목 추가 등록 (단건)", description = "새로운 종목을 사용자의 보유/관심 목록에 단건 추가합니다.")
+    @Operation(summary = "보유/관심 종목 등록", description = "새로운 종목을 사용자의 보유/관심 목록에 추가합니다.")
     @PostMapping("/stocks/my")
     public ResponseEntity<ApiResponseDto> registerMyStock(
             @RequestHeader(value = "X-User-Id", defaultValue = "1") Long userId,
@@ -42,7 +42,7 @@ public class StockController {
                 .body(ApiResponseDto.success("Stock " + dto.getCode() + " registered."));
     }
 
-    @Operation(summary = "보유/관심 종목 추가 등록 (일괄/배치)", description = "온보딩 UX 지원용으로 여러 종목 코드를 일괄 등록합니다.")
+    @Operation(summary = "보유/관심 종목 일괄 등록", description = "온보딩 UX 지원용으로 여러 종목 코드를 일괄 등록합니다.")
     @PostMapping("/stocks/my/batch")
     public ResponseEntity<ApiResponseDto> registerMyStocksBatch(
             @RequestHeader(value = "X-User-Id", defaultValue = "1") Long userId,
@@ -74,7 +74,7 @@ public class StockController {
         return ResponseEntity.ok(stockService.getMyIndustries(userId));
     }
 
-    @Operation(summary = "관심 산업 분야 추가 등록 (단건)", description = "새로운 관심 산업 분야를 단건 등록합니다.")
+    @Operation(summary = "관심 산업 분야 등록", description = "새로운 관심 산업 분야를 등록합니다.")
     @PostMapping("/industries/my")
     public ResponseEntity<ApiResponseDto> registerMyIndustry(
             @RequestHeader(value = "X-User-Id", defaultValue = "1") Long userId,
@@ -84,7 +84,7 @@ public class StockController {
                 .body(ApiResponseDto.success("Industry " + dto.getCode() + " registered."));
     }
 
-    @Operation(summary = "관심 산업 분야 추가 등록 (일괄/배치)", description = "온보딩 UX 지원용으로 여러 산업 코드를 일괄 등록합니다.")
+    @Operation(summary = "관심 산업 분야 일괄 등록", description = "온보딩 UX 지원용으로 여러 산업 코드를 일괄 등록합니다.")
     @PostMapping("/industries/my/batch")
     public ResponseEntity<ApiResponseDto> registerMyIndustriesBatch(
             @RequestHeader(value = "X-User-Id", defaultValue = "1") Long userId,
