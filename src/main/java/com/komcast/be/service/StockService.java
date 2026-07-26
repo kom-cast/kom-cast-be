@@ -67,10 +67,7 @@ public class StockService {
         List<UserStock> userStocks = userStockRepository.findByUserId(user.getId());
 
         if (userStocks.isEmpty()) {
-            return List.of(
-                    new StockResponseDto("삼성전자", "005930", 73400, 1.2),
-                    new StockResponseDto("SK하이닉스", "000660", 189000, 3.4)
-            );
+            return List.of();
         }
 
         Set<String> codeOrNames = userStocks.stream()
