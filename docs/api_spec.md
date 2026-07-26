@@ -20,15 +20,18 @@ X-User-Id: 1
 ## 1. 개인화 및 온보딩 설정 (Preferences)
 
 ### 1) 온보딩/환경 설정 통합 조회 (`GET /api/v1/preferences`)
-- **설명**: 현재 사용자의 닉네임, 보유 종목, 관심 산업군, 키워드 필터링 정보 및 알림 수신 상태를 종합적으로 반환합니다. (개인 시간 설정은 제외)
+- **설명**: 현재 사용자의 닉네임, 보유 종목, 관심 산업 분야, 키워드 필터링 정보 및 알림 수신 상태를 종합적으로 반환합니다. (개인 시간 설정은 제외)
 - **Request Header**: `X-User-Id: 1`
 - **Response Body (JSON)**:
 ```json
 {
   "nickname": "민준",
-  "portfolio": ["삼성전자", "SK하이닉스"],
-  "interests": ["삼성전자", "NAVER", "카카오"],
-  "sectors": ["반도체", "2차전지"],
+  "portfolio": ["005930", "000660"],
+  "interests": ["005930", "035420"],
+  "industries": [
+    { "code": "IND001", "name": "반도체" },
+    { "code": "IND002", "name": "2차전지" }
+  ],
   "includeKeywords": ["실적", "서프라이즈"],
   "excludeKeywords": ["정치", "루머"],
   "freeText": "반도체 관련 위주로 자세하게 대본을 써주세요.",
@@ -47,9 +50,9 @@ X-User-Id: 1
 ```json
 {
   "nickname": "민준",
-  "portfolio": ["삼성전자", "SK하이닉스"],
-  "interests": ["삼성전자", "NAVER"],
-  "sectors": ["반도체", "AI/빅테크"],
+  "portfolio": ["005930", "000660"],
+  "interests": ["005930", "035420"],
+  "industries": ["IND001", "IND005"],
   "includeKeywords": ["반도체", "AI"],
   "excludeKeywords": ["가십"],
   "freeText": "반도체 위주로 대본을 생성해주세요.",
@@ -127,7 +130,7 @@ X-User-Id: 1
 
 ---
 
-## 2. 관심/보유 종목 및 섹터 관리 (Stocks & Sectors)
+## 2. 관심/보유 종목 및 산업 분야 관리 (Stocks & Industries)
 
 ### 1) 전체 주식 마스터 리스트 조회 (`GET /api/v1/stocks`)
 - **설명**: 온보딩이나 설정에서 종목을 검색하여 등록할 때 필요한 마스터 종목 데이터입니다.
@@ -195,19 +198,19 @@ X-User-Id: 1
 }
 ```
 
-### 5) 전체 관심 섹터 목록 조회 (`GET /api/v1/sectors`)
-- **설명**: 온보딩 단계에서 제공할 수 있는 선택 섹터 전체 리스트를 조회합니다.
+### 5) 전체 관심 산업 분야 목록 조회 (`GET /api/v1/industries`)
+- **설명**: 온보딩 단계에서 제공할 수 있는 선택 산업 분야 전체 리스트를 조회합니다.
 - **Response Body (JSON)**:
 ```json
 [
-  "반도체",
-  "2차전지",
-  "바이오/헬스케어",
-  "금융",
-  "AI/빅테크",
-  "자동차",
-  "엔터테인먼트",
-  "게임"
+  { "code": "IND001", "name": "반도체" },
+  { "code": "IND002", "name": "2차전지" },
+  { "code": "IND003", "name": "바이오/헬스케어" },
+  { "code": "IND004", "name": "금융" },
+  { "code": "IND005", "name": "AI/빅테크" },
+  { "code": "IND006", "name": "자동차" },
+  { "code": "IND007", "name": "엔터테인먼트" },
+  { "code": "IND008", "name": "게임" }
 ]
 ```
 
@@ -246,7 +249,7 @@ X-User-Id: 1
     {
       "fraction": 0.62,
       "stock": "2차전지",
-      "text": "2차전지 섹터 전반이 반등하며 관련주들이 강세를 보이고 있습니다."
+      "text": "2차전지 분야 전반이 반등하며 관련주들이 강세를 보이고 있습니다."
     },
     {
       "fraction": 0.85,
@@ -274,7 +277,7 @@ X-User-Id: 1
     {
       "id": 1003,
       "date": "2025-07-10",
-      "headline": "2차전지 섹터 반등, NAVER 신규 서비스 발표",
+      "headline": "2차전지 분야 반등, NAVER 신규 서비스 발표",
       "duration": "10"
     },
     {
