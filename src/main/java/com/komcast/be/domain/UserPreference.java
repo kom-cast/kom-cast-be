@@ -25,9 +25,8 @@ public class UserPreference extends BaseTimeEntity {
     @Builder.Default
     private Integer briefingDuration = 10;
 
-    @Column(name = "voice", nullable = false, length = 50)
-    @Builder.Default
-    private String voice = "jieun";
+    @Column(name = "voice", length = 50)
+    private String voice;
 
     @Column(name = "free_text", columnDefinition = "TEXT")
     private String freeText;

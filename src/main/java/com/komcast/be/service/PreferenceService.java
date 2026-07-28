@@ -175,7 +175,7 @@ public class PreferenceService {
                 userPreferenceRepository.save(UserPreference.builder()
                         .user(user)
                         .briefingDuration(10)
-                        .voice("jieun")
+                        .voice(null)
                         .freeText(null)
                         .notifyBriefing(true)
                         .notifyPriceAlert(true)
