@@ -5,6 +5,7 @@ import com.komcast.be.domain.MarketPrice;
 import com.komcast.be.domain.Stock;
 import com.komcast.be.domain.User;
 import com.komcast.be.domain.UserIndustry;
+import com.komcast.be.domain.UserPlan;
 import com.komcast.be.domain.UserStock;
 import com.komcast.be.dto.*;
 import com.komcast.be.repository.*;
@@ -232,7 +233,7 @@ public class StockService {
                         .orElseGet(() -> userRepository.save(User.builder()
                                 .id(userId)
                                 .nickname("민준")
-                                .plan("FREE")
+                                .plan(UserPlan.STANDARD)
                                 .build()));
             } catch (IllegalArgumentException ignored) {
             }
@@ -240,7 +241,7 @@ public class StockService {
         return userRepository.findAll().stream().findFirst()
                 .orElseGet(() -> userRepository.save(User.builder()
                         .nickname("민준")
-                        .plan("FREE")
+                        .plan(UserPlan.STANDARD)
                         .build())
                 );
     }

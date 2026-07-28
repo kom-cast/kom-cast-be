@@ -156,7 +156,7 @@ public class PreferenceService {
                         .orElseGet(() -> userRepository.save(User.builder()
                                 .id(userId)
                                 .nickname("민준")
-                                .plan("FREE")
+                                .plan(UserPlan.STANDARD)
                                 .build()));
             } catch (IllegalArgumentException ignored) {
             }
@@ -164,7 +164,7 @@ public class PreferenceService {
         return userRepository.findAll().stream().findFirst()
                 .orElseGet(() -> userRepository.save(User.builder()
                         .nickname("민준")
-                        .plan("FREE")
+                        .plan(UserPlan.STANDARD)
                         .build())
                 );
     }

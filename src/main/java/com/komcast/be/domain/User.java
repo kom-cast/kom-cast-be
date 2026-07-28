@@ -17,18 +17,19 @@ public class User extends BaseTimeEntity {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(name = "nickname", length = 50)
+    @Column(name = "nickname", nullable = false, length = 50)
     private String nickname;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "plan", nullable = false, length = 20)
     @Builder.Default
-    private String plan = "FREE";
+    private UserPlan plan = UserPlan.STANDARD;
 
     public void updateNickname(String nickname) {
         this.nickname = nickname;
     }
 
-    public void updatePlan(String plan) {
+    public void updatePlan(UserPlan plan) {
         this.plan = plan;
     }
 }

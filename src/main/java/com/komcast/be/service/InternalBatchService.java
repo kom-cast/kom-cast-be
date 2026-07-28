@@ -4,6 +4,7 @@ import com.komcast.be.domain.Audio;
 import com.komcast.be.domain.AudioSegment;
 import com.komcast.be.domain.Notification;
 import com.komcast.be.domain.User;
+import com.komcast.be.domain.UserPlan;
 import com.komcast.be.dto.*;
 import com.komcast.be.repository.AudioRepository;
 import com.komcast.be.repository.AudioSegmentRepository;
@@ -44,7 +45,7 @@ public class InternalBatchService {
         if (users.isEmpty()) {
             User defaultUser = userRepository.save(User.builder()
                     .nickname("민준")
-                    .plan("FREE")
+                    .plan(UserPlan.STANDARD)
                     .build());
             users = List.of(defaultUser);
         }
