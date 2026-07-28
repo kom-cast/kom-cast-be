@@ -5,6 +5,9 @@ import com.komcast.be.service.StockService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,10 +22,14 @@ public class StockController {
 
     private final StockService stockService;
 
-    @Operation(summary = "전체 주식 마스터 리스트 조회", description = "종목 추가/검색용 전체 마스터 주식 데이터 리스트를 반환합니다.")
+    @Operation(summary = "전체 주식 마스터 리스트 조회 (페이지네이션 & 검색)", description = "종목 추가/검색용 전체 마스터 주식 데이터 리스트를 페이지네이션 및 키워드 검색으로 반환합니다.")
     @GetMapping("/stocks")
-    public ResponseEntity<List<StockResponseDto>> getAllStocks() {
-        return ResponseEntity.ok(stockService.getAllStocks());
+    public ResponseEntity<Page<StockResponseDto>> getAllStocks(
+            @RequestParam(value = "keyword", required = false) String keyword,
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "20") int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return ResponseEntity.ok(stockService.getAllStocks(keyword, pageable));
     }
 
     @Operation(summary = "나의 보유/관심 종목 및 시세 조회", description = "사용자가 등록한 보유/관심 종목 목록 및 실시간 시세를 반환합니다.")

@@ -1,6 +1,8 @@
 package com.komcast.be.repository;
 
 import com.komcast.be.domain.Stock;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -10,4 +12,5 @@ import java.util.Optional;
 public interface StockRepository extends JpaRepository<Stock, String> {
     Optional<Stock> findByStockCode(String stockCode);
     Optional<Stock> findByCorpName(String corpName);
+    Page<Stock> findByCorpNameContainingOrStockCodeContaining(String corpName, String stockCode, Pageable pageable);
 }

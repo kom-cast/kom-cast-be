@@ -9,6 +9,8 @@ import com.komcast.be.domain.UserStock;
 import com.komcast.be.dto.*;
 import com.komcast.be.repository.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,6 +28,17 @@ public class StockService {
     private final IndustryRepository industryRepository;
     private final MarketPriceRepository marketPriceRepository;
     private final UserRepository userRepository;
+
+    public Page<StockResponseDto> getAllStocks(String keyword, Pageable pageable) {
+        Page<Stock> dbStocks;
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            String kw = keyword.trim();
+            dbStocks = stockRepository.findByCorpNameContainingOrStockCodeContaining(kw, kw, pageable);
+        } else {
+            dbStocks = stockRepository.findAll(pageable);
+        }
+        return dbStocks.map(this::mapToStockResponseDto);
+    }
 
     public List<StockResponseDto> getAllStocks() {
         List<Stock> dbStocks = stockRepository.findAll();
