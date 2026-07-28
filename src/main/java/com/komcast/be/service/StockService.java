@@ -1,9 +1,11 @@
 package com.komcast.be.service;
 
+import com.komcast.be.domain.Industry;
 import com.komcast.be.domain.User;
 import com.komcast.be.domain.UserIndustry;
 import com.komcast.be.domain.UserStock;
 import com.komcast.be.dto.*;
+import com.komcast.be.repository.IndustryRepository;
 import com.komcast.be.repository.UserIndustryRepository;
 import com.komcast.be.repository.UserRepository;
 import com.komcast.be.repository.UserStockRepository;
@@ -21,6 +23,7 @@ public class StockService {
 
     private final UserStockRepository userStockRepository;
     private final UserIndustryRepository userIndustryRepository;
+    private final IndustryRepository industryRepository;
     private final UserRepository userRepository;
 
     private static final List<StockResponseDto> MASTER_STOCKS = List.of(
@@ -38,7 +41,7 @@ public class StockService {
             new StockResponseDto("KB금융", "105560", 78900, 0.6)
     );
 
-    private static final List<IndustryResponseDto> MASTER_INDUSTRIES = List.of(
+    private static final List<IndustryResponseDto> DEFAULT_INDUSTRIES = List.of(
             new IndustryResponseDto("IND001", "반도체"),
             new IndustryResponseDto("IND002", "2차전지"),
             new IndustryResponseDto("IND003", "바이오/헬스케어"),
@@ -59,8 +62,25 @@ public class StockService {
         return MASTER_STOCKS;
     }
 
+    @Transactional
     public List<IndustryResponseDto> getAllIndustries() {
-        return MASTER_INDUSTRIES;
+        List<Industry> dbIndustries = industryRepository.findAll();
+        if (dbIndustries.isEmpty()) {
+            for (IndustryResponseDto dto : DEFAULT_INDUSTRIES) {
+                industryRepository.save(Industry.builder()
+                        .industryCode(dto.getCode())
+                        .industryName(dto.getName())
+                        .build());
+            }
+            dbIndustries = industryRepository.findAll();
+        }
+
+        return dbIndustries.stream()
+                .map(i -> IndustryResponseDto.builder()
+                        .code(i.getIndustryCode())
+                        .name(i.getIndustryName())
+                        .build())
+                .collect(Collectors.toList());
     }
 
     public List<StockResponseDto> getMyStocks(Object userId) {
@@ -116,9 +136,11 @@ public class StockService {
         userStockRepository.deleteByUserIdAndStockCode(user.getId(), code);
     }
 
+    @Transactional
     public List<IndustryResponseDto> getMyIndustries(Object userId) {
         User user = getOrCreateUser(userId);
-        Map<String, String> masterCodeToName = MASTER_INDUSTRIES.stream()
+        List<IndustryResponseDto> allIndustries = getAllIndustries();
+        Map<String, String> masterCodeToName = allIndustries.stream()
                 .collect(Collectors.toMap(IndustryResponseDto::getCode, IndustryResponseDto::getName, (a, b) -> a));
 
         return userIndustryRepository.findByUserId(user.getId())
@@ -135,9 +157,10 @@ public class StockService {
     @Transactional
     public void registerMyIndustry(Object userId, IndustryRegisterRequestDto dto) {
         User user = getOrCreateUser(userId);
-        Map<String, String> masterCodeToName = MASTER_INDUSTRIES.stream()
+        List<IndustryResponseDto> allIndustries = getAllIndustries();
+        Map<String, String> masterCodeToName = allIndustries.stream()
                 .collect(Collectors.toMap(IndustryResponseDto::getCode, IndustryResponseDto::getName, (a, b) -> a));
-        Map<String, String> masterNameToCode = MASTER_INDUSTRIES.stream()
+        Map<String, String> masterNameToCode = allIndustries.stream()
                 .collect(Collectors.toMap(IndustryResponseDto::getName, IndustryResponseDto::getCode, (a, b) -> a));
 
         String val = dto.getCode();
@@ -164,9 +187,10 @@ public class StockService {
     public void registerMyIndustriesBatch(Object userId, IndustryBatchRegisterRequestDto dto) {
         User user = getOrCreateUser(userId);
         if (dto.getCodes() != null && !dto.getCodes().isEmpty()) {
-            Map<String, String> masterCodeToName = MASTER_INDUSTRIES.stream()
+            List<IndustryResponseDto> allIndustries = getAllIndustries();
+            Map<String, String> masterCodeToName = allIndustries.stream()
                     .collect(Collectors.toMap(IndustryResponseDto::getCode, IndustryResponseDto::getName, (a, b) -> a));
-            Map<String, String> masterNameToCode = MASTER_INDUSTRIES.stream()
+            Map<String, String> masterNameToCode = allIndustries.stream()
                     .collect(Collectors.toMap(IndustryResponseDto::getName, IndustryResponseDto::getCode, (a, b) -> a));
 
             Set<String> uniqueCodes = new LinkedHashSet<>(dto.getCodes());
