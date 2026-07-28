@@ -56,7 +56,7 @@ cd kom-cast-be
 
 서버 구동 후 브라우저에서 아래 주소로 접속하시면 시각화된 Swagger UI를 통해 모든 REST API 명세를 확인하고 직접 테스트해 보실 수 있습니다.
 
-* **Swagger UI 접속 주소**: [http://localhost:8080/api/swagger-ui/index.html](http://localhost:8080/swagger-ui/index.html)
+* **Swagger UI 접속 주소**: [http://localhost:8080/api/swagger-ui/index.html](http://localhost:8080/api/swagger-ui/index.html)
 * **API 헤더 테스트 팁**:
   * 해커톤 진행을 위해 회원 인증 모듈 대신 HTTP Header의 `X-User-Id`를 사용하여 유저를 식별합니다.
   * Swagger UI 상단의 **`Authorize`** 버튼을 누르거나 각 API의 Header 파라미터에 `1` (기본값)을 입력하여 테스트하실 수 있습니다.
