@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -148,6 +149,18 @@ public class PreferenceService {
 
     @Transactional
     public User getOrCreateUser(Object userIdObj) {
+        if (userIdObj != null) {
+            try {
+                UUID userId = userIdObj instanceof UUID ? (UUID) userIdObj : UUID.fromString(userIdObj.toString());
+                return userRepository.findById(userId)
+                        .orElseGet(() -> userRepository.save(User.builder()
+                                .id(userId)
+                                .nickname("민준")
+                                .plan("FREE")
+                                .build()));
+            } catch (IllegalArgumentException ignored) {
+            }
+        }
         return userRepository.findAll().stream().findFirst()
                 .orElseGet(() -> userRepository.save(User.builder()
                         .nickname("민준")
