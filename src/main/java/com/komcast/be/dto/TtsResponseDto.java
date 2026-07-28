@@ -44,23 +44,15 @@ public class TtsResponseDto {
     public static class TtsTargetItem {
         private String type; // STOCK, INDUSTRY, USER
 
-        @JsonProperty("stock_id")
-        private String stockId;
-
         @JsonProperty("stock_code")
         private String stockCode;
-
-        @JsonProperty("industry_id")
-        private String industryId;
 
         @JsonProperty("industry_code")
         private String industryCode;
 
         public String getTargetCode() {
             if (stockCode != null) return stockCode;
-            if (stockId != null) return stockId;
             if (industryCode != null) return industryCode;
-            if (industryId != null) return industryId;
             return null;
         }
     }

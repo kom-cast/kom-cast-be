@@ -31,14 +31,8 @@ public class BriefingSegmentDto {
     public static class BriefingTargetDto {
         private String type; // STOCK, INDUSTRY, USER
 
-        @JsonProperty("stock_id")
-        private String stockId;
-
         @JsonProperty("stock_code")
         private String stockCode;
-
-        @JsonProperty("industry_id")
-        private String industryId;
 
         @JsonProperty("industry_code")
         private String industryCode;
