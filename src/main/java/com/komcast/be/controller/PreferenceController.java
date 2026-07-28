@@ -19,7 +19,7 @@ public class PreferenceController {
     @Operation(summary = "환경설정 종합 조회", description = "현재 사용자의 온보딩 설정, 보유종목, 관심분야, 키워드 및 알림 설정을 종합 조회합니다.")
     @GetMapping
     public ResponseEntity<PreferencesResponseDto> getPreferences(
-            @RequestHeader(value = "X-User-Id", defaultValue = "1") Long userId) {
+            @RequestHeader(value = "X-User-Id", defaultValue = "1") String userId) {
         return ResponseEntity.ok(preferenceService.getPreferences(userId));
     }
 }

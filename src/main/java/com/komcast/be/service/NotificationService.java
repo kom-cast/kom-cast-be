@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -20,18 +21,18 @@ public class NotificationService {
     private final PreferenceService preferenceService;
 
     @Transactional
-    public List<NotificationResponseDto> getNotifications(Long userId) {
+    public List<NotificationResponseDto> getNotifications(Object userId) {
         User user = preferenceService.getOrCreateUser(userId);
-        List<Notification> notifications = notificationRepository.findByUserIdOrderByIdDesc(user.getId());
+        List<Notification> notifications = notificationRepository.findByUserIdOrderByCreatedAtDesc(user.getId());
 
         if (notifications.isEmpty()) {
             createDummyNotifications(user);
-            notifications = notificationRepository.findByUserIdOrderByIdDesc(user.getId());
+            notifications = notificationRepository.findByUserIdOrderByCreatedAtDesc(user.getId());
         }
 
         return notifications.stream()
                 .map(n -> NotificationResponseDto.builder()
-                        .id(n.getId())
+                        .id(n.getId() != null ? n.getId().toString() : UUID.randomUUID().toString())
                         .type(n.getType())
                         .title(n.getTitle())
                         .description(n.getDescription())
@@ -42,16 +43,22 @@ public class NotificationService {
     }
 
     @Transactional
-    public void markAsRead(Long userId, Long notificationId) {
-        Notification notification = notificationRepository.findById(notificationId)
-                .orElseThrow(() -> new IllegalArgumentException("Notification not found: " + notificationId));
-        notification.markAsRead();
+    public void markAsRead(Object userId, Object notificationId) {
+        if (notificationId != null) {
+            try {
+                UUID nId = notificationId instanceof UUID ? (UUID) notificationId : UUID.fromString(notificationId.toString());
+                Notification notification = notificationRepository.findById(nId).orElse(null);
+                if (notification != null) {
+                    notification.markAsRead();
+                }
+            } catch (Exception ignored) {}
+        }
     }
 
     @Transactional
-    public void markAllAsRead(Long userId) {
+    public void markAllAsRead(Object userId) {
         User user = preferenceService.getOrCreateUser(userId);
-        List<Notification> unreadList = notificationRepository.findByUserIdAndIsReadFalseOrderByIdDesc(user.getId());
+        List<Notification> unreadList = notificationRepository.findByUserIdAndIsReadFalseOrderByCreatedAtDesc(user.getId());
         for (Notification n : unreadList) {
             n.markAsRead();
         }

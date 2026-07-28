@@ -5,11 +5,12 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.UUID;
 
 @Repository
-public interface UserIndustryRepository extends JpaRepository<UserIndustry, Long> {
-    List<UserIndustry> findByUserId(Long userId);
-    boolean existsByUserIdAndIndustryCode(Long userId, String industryCode);
-    void deleteByUserIdAndIndustryCode(Long userId, String industryCode);
-    void deleteByUserId(Long userId);
+public interface UserIndustryRepository extends JpaRepository<UserIndustry, UUID> {
+    List<UserIndustry> findByUserId(UUID userId);
+    boolean existsByUserIdAndIndustryCode(UUID userId, String industryCode);
+    void deleteByUserIdAndIndustryCode(UUID userId, String industryCode);
+    void deleteByUserId(UUID userId);
 }

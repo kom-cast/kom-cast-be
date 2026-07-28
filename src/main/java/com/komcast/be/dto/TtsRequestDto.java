@@ -12,33 +12,31 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class BriefingSegmentDto {
+public class TtsRequestDto {
 
-    private Double fraction;
-    private String speaker;
-    private BriefingTargetDto target;
-    private String text;
+    @JsonProperty("script_id")
+    private String scriptId;
 
-    @JsonProperty("startSec")
-    private Double startSec;
-
-    private List<WordTimestampDto> words;
+    private List<TtsSection> sections;
 
     @Getter
     @NoArgsConstructor
     @AllArgsConstructor
     @Builder
-    public static class BriefingTargetDto {
-        private String type; // STOCK, INDUSTRY, USER
+    public static class TtsSection {
+        private TtsTarget target;
+        private List<TtsLine> lines;
+    }
 
-        @JsonProperty("stock_id")
-        private String stockId;
+    @Getter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class TtsTarget {
+        private String type; // STOCK, INDUSTRY, USER
 
         @JsonProperty("stock_code")
         private String stockCode;
-
-        @JsonProperty("industry_id")
-        private String industryId;
 
         @JsonProperty("industry_code")
         private String industryCode;
@@ -48,13 +46,8 @@ public class BriefingSegmentDto {
     @NoArgsConstructor
     @AllArgsConstructor
     @Builder
-    public static class WordTimestampDto {
+    public static class TtsLine {
+        private String speaker;
         private String text;
-
-        @JsonProperty("startSec")
-        private Double startSec;
-
-        @JsonProperty("endSec")
-        private Double endSec;
     }
 }

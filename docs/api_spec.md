@@ -1,9 +1,8 @@
 # Kom-Cast 백엔드 API 상세 명세서 (API Spec)
 
-본 명세서는 프론트엔드(`kom-cast-fe`) 연동 및 모의(Mock) 응답 구성을 위한 백엔드 REST API 설계 사양서입니다.  
-**개인별 브리핑 생성 시각 지정 기능이 기획적으로 제거됨**에 따라 관련 속성 및 엔드포인트가 정정되었습니다.
+본 명세서는 프론트엔드(`kom-cast-fe`) 연동 및 타 서버(`kom-cast-data`, `kom-cast-ai`) 통신을 위한 백엔드 REST API 설계 사양서입니다.
 
-해커톤의 진행 속도를 위해 모든 요청은 단순 HTTP Header인 `X-User-Id: 1`과 같은 식별 방식을 우선 적용하며, 요청 및 응답 바디는 모두 `application/json` 형식을 기준으로 합니다.
+해커톤의 진행 속도를 위해 모든 클라이언트 요청은 단순 HTTP Header인 `X-User-Id: 1`과 같은 식별 방식을 우선 적용하며, 요청 및 응답 바디는 모두 `application/json` 형식을 기준으로 합니다.
 
 ---
 
@@ -13,6 +12,35 @@
 인증 모듈이 배제된 해커톤 환경이므로, 헤더에 아래 사용자 식별 값을 탑재하여 요청을 전송합니다.
 ```http
 X-User-Id: 1
+```
+
+---
+
+## 00. Internal Batch (데이터/AI 서버 연동)
+
+### 1) 데이터 정제 완료 트리거 수신 (`POST /api/v1/internal/batch-complete`)
+- **설명**: `kom-cast-data` 서버가 매일 아침 수집 및 데이터 정제 배치를 완료한 후 통지하는 Webhook 수신 엔드포인트입니다. 수신 시 유저별 맞춤 브리핑 생성 준비 및 알림을 발행합니다.
+- **Request Body (JSON)**:
+```json
+{
+  "run_date": "2026-07-27",
+  "status": "SUCCEEDED",
+  "jobs": {
+    "dart_corp_codes": "job-1",
+    "industries": "job-2",
+    "market_prices": "job-3",
+    "industry_prices": "job-4",
+    "news": "job-5",
+    "dart_disclosures": "job-6"
+  }
+}
+```
+- **Response Body (JSON)**:
+```json
+{
+  "status": "SUCCESS",
+  "message": "Batch completion event received and processed."
+}
 ```
 
 ---
@@ -35,7 +63,7 @@ X-User-Id: 1
 ## 1. 개인화 및 온보딩 설정 (Preferences)
 
 ### 1) 온보딩/환경 설정 통합 조회 (`GET /api/v1/preferences`)
-- **설명**: 현재 사용자의 닉네임, 보유 종목, 관심 산업 분야, 키워드 필터링 정보 및 알림 수신 상태를 종합적으로 반환합니다. (개인 시간 설정은 제외)
+- **설명**: 현재 사용자의 닉네임, 보유 종목, 관심 산업 분야, 키워드 필터링 정보 및 알림 수신 상태를 종합적으로 반환합니다.
 - **Request Header**: `X-User-Id: 1`
 - **Response Body (JSON)**:
 ```json
@@ -205,9 +233,9 @@ X-User-Id: 1
 ```json
 {
   "id": 1004,
-  "date": "2026-07-26",
+  "date": "2026-07-27",
   "headline": "삼성전자·SK하이닉스 실적 서프라이즈",
-  "audioUrl": "https://ncp-object-storage.com/briefings/20260726-user1.mp3",
+  "audioUrl": "https://ncp-object-storage.com/briefings/20260727-user1.mp3",
   "durationSeconds": 600,
   "segments": [
     {
@@ -232,7 +260,7 @@ X-User-Id: 1
     "id": 3,
     "type": "BRIEFING",
     "title": "오늘의 브리핑이 준비됐어요",
-    "description": "새로운 맞춤형 아침 브리핑을 들어보세요",
+    "description": "데이터 정제가 완료되어 맞춤형 아침 브리핑이 준비되었습니다.",
     "time": "방금 전",
     "unread": true
   }

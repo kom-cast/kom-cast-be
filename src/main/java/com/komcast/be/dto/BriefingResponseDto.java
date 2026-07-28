@@ -12,7 +12,7 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 public class BriefingResponseDto {
-    private Long id;
+    private Object id;
     private String date;
     private String headline;
     private String audioUrl;

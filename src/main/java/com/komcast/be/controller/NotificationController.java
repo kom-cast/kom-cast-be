@@ -25,21 +25,21 @@ public class NotificationController {
     @Operation(summary = "수신 알림 목록 조회", description = "사용자에게 수신된 브리핑/시세/시스템 알림 이력 목록을 반환합니다.")
     @GetMapping
     public ResponseEntity<List<NotificationResponseDto>> getNotifications(
-            @RequestHeader(value = "X-User-Id", defaultValue = "1") Long userId) {
+            @RequestHeader(value = "X-User-Id", defaultValue = "1") String userId) {
         return ResponseEntity.ok(notificationService.getNotifications(userId));
     }
 
     @Operation(summary = "알림 설정 조회", description = "알림 수신 동의 상태를 조회합니다.")
     @GetMapping("/settings")
     public ResponseEntity<NotificationToggleRequestDto> getNotificationSettings(
-            @RequestHeader(value = "X-User-Id", defaultValue = "1") Long userId) {
+            @RequestHeader(value = "X-User-Id", defaultValue = "1") String userId) {
         return ResponseEntity.ok(preferenceService.getNotificationSettings(userId));
     }
 
     @Operation(summary = "알림 설정 변경", description = "알림 수신 동의 상태를 수정합니다.")
     @PatchMapping("/settings")
     public ResponseEntity<ApiResponseDto> updateNotificationSettings(
-            @RequestHeader(value = "X-User-Id", defaultValue = "1") Long userId,
+            @RequestHeader(value = "X-User-Id", defaultValue = "1") String userId,
             @RequestBody NotificationToggleRequestDto dto) {
         preferenceService.updateNotifications(userId, dto);
         return ResponseEntity.ok(ApiResponseDto.success("Notification settings updated."));
@@ -48,8 +48,8 @@ public class NotificationController {
     @Operation(summary = "개별 알림 읽음 처리", description = "특정 알림 항목을 읽음(unread: false) 상태로 업데이트합니다.")
     @PatchMapping("/{id}/read")
     public ResponseEntity<ApiResponseDto> markAsRead(
-            @RequestHeader(value = "X-User-Id", defaultValue = "1") Long userId,
-            @PathVariable("id") Long id) {
+            @RequestHeader(value = "X-User-Id", defaultValue = "1") String userId,
+            @PathVariable("id") String id) {
         notificationService.markAsRead(userId, id);
         return ResponseEntity.ok(ApiResponseDto.success("Notification " + id + " marked as read."));
     }
@@ -57,7 +57,7 @@ public class NotificationController {
     @Operation(summary = "모든 알림 일괄 읽음 처리", description = "수신된 모든 알림을 한 번에 읽음 상태로 업데이트합니다.")
     @PostMapping("/read-all")
     public ResponseEntity<ApiResponseDto> markAllAsRead(
-            @RequestHeader(value = "X-User-Id", defaultValue = "1") Long userId) {
+            @RequestHeader(value = "X-User-Id", defaultValue = "1") String userId) {
         notificationService.markAllAsRead(userId);
         return ResponseEntity.ok(ApiResponseDto.success("All notifications marked as read."));
     }
