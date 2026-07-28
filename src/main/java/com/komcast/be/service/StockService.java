@@ -1,16 +1,13 @@
 package com.komcast.be.service;
 
 import com.komcast.be.domain.Industry;
+import com.komcast.be.domain.MarketPrice;
 import com.komcast.be.domain.Stock;
 import com.komcast.be.domain.User;
 import com.komcast.be.domain.UserIndustry;
 import com.komcast.be.domain.UserStock;
 import com.komcast.be.dto.*;
-import com.komcast.be.repository.IndustryRepository;
-import com.komcast.be.repository.StockRepository;
-import com.komcast.be.repository.UserIndustryRepository;
-import com.komcast.be.repository.UserRepository;
-import com.komcast.be.repository.UserStockRepository;
+import com.komcast.be.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,6 +24,7 @@ public class StockService {
     private final UserIndustryRepository userIndustryRepository;
     private final StockRepository stockRepository;
     private final IndustryRepository industryRepository;
+    private final MarketPriceRepository marketPriceRepository;
     private final UserRepository userRepository;
 
     private static final Map<String, String> CODE_TO_NAME_MAP = Map.ofEntries(
@@ -49,7 +47,7 @@ public class StockService {
     public List<StockResponseDto> getAllStocks() {
         List<Stock> dbStocks = stockRepository.findAll();
         return dbStocks.stream()
-                .map(s -> new StockResponseDto(s.getCorpName(), s.getStockCode(), 70000, 0.0))
+                .map(this::mapToStockResponseDto)
                 .collect(Collectors.toList());
     }
 
@@ -78,9 +76,33 @@ public class StockService {
                 .map(us -> {
                     String code = us.getStockCode();
                     String name = codeToNameMap.getOrDefault(code, code);
-                    return new StockResponseDto(name, code, 70000, 0.0);
+                    int price = 0;
+                    double change = 0.0;
+
+                    Optional<MarketPrice> latestPrice = marketPriceRepository.findTopByStockCodeOrderByTradedAtDesc(code);
+                    if (latestPrice.isPresent()) {
+                        price = latestPrice.get().getClosePrice() != null ? latestPrice.get().getClosePrice().intValue() : 0;
+                        change = latestPrice.get().getChangeRate() != null ? latestPrice.get().getChangeRate().doubleValue() : 0.0;
+                    }
+
+                    return new StockResponseDto(name, code, price, change);
                 })
                 .collect(Collectors.toList());
+    }
+
+    private StockResponseDto mapToStockResponseDto(Stock s) {
+        String code = s.getStockCode();
+        String name = s.getCorpName();
+        int price = 0;
+        double change = 0.0;
+
+        Optional<MarketPrice> latestPrice = marketPriceRepository.findTopByStockCodeOrderByTradedAtDesc(code);
+        if (latestPrice.isPresent()) {
+            price = latestPrice.get().getClosePrice() != null ? latestPrice.get().getClosePrice().intValue() : 0;
+            change = latestPrice.get().getChangeRate() != null ? latestPrice.get().getChangeRate().doubleValue() : 0.0;
+        }
+
+        return new StockResponseDto(name, code, price, change);
     }
 
     @Transactional
