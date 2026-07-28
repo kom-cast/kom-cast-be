@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -40,7 +41,7 @@ public class BriefingService {
         List<AudioSegment> segments = audioSegmentRepository.findByAudioIdOrderBySegmentOrderAsc(audio.getId());
 
         List<BriefingSegmentDto> segmentDtos = segments.stream()
-                .map(this::mapToSegmentDto)
+                .map(s -> mapToSegmentDto(s, audio.getDurationSeconds()))
                 .collect(Collectors.toList());
 
         return BriefingResponseDto.builder()
@@ -60,7 +61,7 @@ public class BriefingService {
 
         BriefingItemDto item = BriefingItemDto.builder()
                 .id(audio.getId())
-                .date(LocalDate.now().toString().replace("-", "."))
+                .date(LocalDate.now().toString())
                 .headline("삼성전자·SK하이닉스 실적 서프라이즈")
                 .duration(String.valueOf(audio.getDurationSeconds() / 60))
                 .build();
@@ -76,7 +77,7 @@ public class BriefingService {
         List<AudioSegment> segments = audioSegmentRepository.findByAudioIdOrderBySegmentOrderAsc(audio.getId());
 
         List<BriefingSegmentDto> segmentDtos = segments.stream()
-                .map(this::mapToSegmentDto)
+                .map(s -> mapToSegmentDto(s, audio.getDurationSeconds()))
                 .collect(Collectors.toList());
 
         return BriefingResponseDto.builder()
@@ -89,7 +90,7 @@ public class BriefingService {
                 .build();
     }
 
-    private BriefingSegmentDto mapToSegmentDto(AudioSegment s) {
+    private BriefingSegmentDto mapToSegmentDto(AudioSegment s, Integer totalDuration) {
         String code = s.getStockCode();
         String type = "USER";
         String stockCode = null;
@@ -105,7 +106,14 @@ public class BriefingService {
             }
         }
 
+        double startSec = (s.getStartSec() != null) ? s.getStartSec() : 0.0;
+        double duration = (totalDuration != null && totalDuration > 0) ? (double) totalDuration : 600.0;
+        double fraction = Math.round((startSec / duration) * 1000.0) / 1000.0;
+
+        List<BriefingSegmentDto.WordTimestampDto> wordTimestamps = generateWordTimestamps(s.getText(), startSec);
+
         return BriefingSegmentDto.builder()
+                .fraction(fraction)
                 .speaker(s.getSpeaker())
                 .target(BriefingSegmentDto.BriefingTargetDto.builder()
                         .type(type)
@@ -113,9 +121,34 @@ public class BriefingService {
                         .industryCode(industryCode)
                         .build())
                 .text(s.getText())
-                .startSec(s.getStartSec())
-                .words(List.of())
+                .startSec(startSec)
+                .words(wordTimestamps)
                 .build();
+    }
+
+    private List<BriefingSegmentDto.WordTimestampDto> generateWordTimestamps(String text, double startSec) {
+        if (text == null || text.trim().isEmpty()) {
+            return List.of();
+        }
+
+        String[] tokens = text.trim().split("\\s+");
+        List<BriefingSegmentDto.WordTimestampDto> words = new ArrayList<>();
+
+        double current = startSec;
+        for (String token : tokens) {
+            double wordDuration = Math.max(0.3, Math.round(token.length() * 0.12 * 100.0) / 100.0);
+            double end = Math.round((current + wordDuration) * 100.0) / 100.0;
+
+            words.add(BriefingSegmentDto.WordTimestampDto.builder()
+                    .text(token)
+                    .startSec(Math.round(current * 100.0) / 100.0)
+                    .endSec(end)
+                    .build());
+
+            current = end + 0.05; // 단어 간 미세 공백(0.05초)
+        }
+
+        return words;
     }
 
     @Transactional

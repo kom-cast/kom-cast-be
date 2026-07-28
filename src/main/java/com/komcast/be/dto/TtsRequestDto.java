@@ -24,6 +24,9 @@ public class TtsRequestDto {
     @AllArgsConstructor
     @Builder
     public static class TtsSection {
+        @JsonProperty("script_type")
+        private String sectionType;
+
         private TtsTarget target;
         private List<TtsLine> lines;
     }

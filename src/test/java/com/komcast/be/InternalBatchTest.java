@@ -9,8 +9,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Map;
-
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
 @SpringBootTest
@@ -26,8 +24,6 @@ class InternalBatchTest {
     void batchCompletionAsyncWebhookWithPayloadTest() {
         BatchCompletionRequestDto payload = BatchCompletionRequestDto.builder()
                 .runDate("2026-07-27")
-                .status("SUCCEEDED")
-                .jobs(Map.of("market_prices", "job-1", "news", "job-2"))
                 .build();
 
         assertDoesNotThrow(() -> internalBatchService.processBatchCompletionAsync(payload));
