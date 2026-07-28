@@ -3,17 +3,19 @@ package com.komcast.be.domain;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.UUID;
+
 @Entity
 @Table(name = "user_preferences")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
-public class UserPreference {
+public class UserPreference extends BaseTimeEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false, unique = true)
@@ -23,7 +25,7 @@ public class UserPreference {
     @Builder.Default
     private Integer briefingDuration = 10;
 
-    @Column(name = "voice", nullable = false, length = 30)
+    @Column(name = "voice", nullable = false, length = 50)
     @Builder.Default
     private String voice = "jieun";
 

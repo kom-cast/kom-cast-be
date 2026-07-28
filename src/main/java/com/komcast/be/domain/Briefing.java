@@ -6,6 +6,7 @@ import lombok.*;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Entity
 @Table(name = "briefings")
@@ -16,8 +17,8 @@ import java.util.List;
 public class Briefing extends BaseTimeEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
@@ -29,7 +30,7 @@ public class Briefing extends BaseTimeEntity {
     @Column(name = "headline", nullable = false, length = 255)
     private String headline;
 
-    @Column(name = "audio_url", nullable = false, length = 512)
+    @Column(name = "audio_url", nullable = false, columnDefinition = "TEXT")
     private String audioUrl;
 
     @Column(name = "duration_seconds", nullable = false)
@@ -40,7 +41,7 @@ public class Briefing extends BaseTimeEntity {
     private List<BriefingSegment> segments = new ArrayList<>();
 
     public void addSegment(BriefingSegment segment) {
-        this.segments.add(segment);
-        segment.assignBriefing(this);
+        segments.add(segment);
+        segment.setBriefing(this);
     }
 }

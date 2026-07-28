@@ -8,9 +8,10 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
-public interface BriefingRepository extends JpaRepository<Briefing, Long> {
-    Optional<Briefing> findTopByUserIdAndDateOrderByCreatedAtDesc(Long userId, LocalDate date);
-    Page<Briefing> findByUserIdOrderByDateDesc(Long userId, Pageable pageable);
+public interface BriefingRepository extends JpaRepository<Briefing, UUID> {
+    Optional<Briefing> findTopByUserIdAndDateOrderByCreatedAtDesc(UUID userId, LocalDate date);
+    Page<Briefing> findByUserIdOrderByDateDesc(UUID userId, Pageable pageable);
 }
