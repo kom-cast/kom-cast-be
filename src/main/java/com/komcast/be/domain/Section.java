@@ -19,11 +19,11 @@ public class Section {
     private UUID id;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "section_type", nullable = false, columnDefinition = "varchar(30)")
+    @Column(name = "section_type", nullable = false, columnDefinition = "section_type")
     private SectionType sectionType;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "target_type", nullable = false, columnDefinition = "varchar(30)")
+    @Column(name = "target_type", nullable = false, columnDefinition = "section_target_type")
     private SectionTargetType targetType;
 
     @Column(name = "stock_code")

@@ -29,6 +29,6 @@ public class ScriptSection {
     private Integer sectionOrder;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "section_type", nullable = false, columnDefinition = "varchar(30)")
+    @Column(name = "section_type", nullable = false, columnDefinition = "section_type")
     private SectionType sectionType;
 }

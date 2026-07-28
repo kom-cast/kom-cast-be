@@ -64,9 +64,15 @@ public class InternalBatchService {
                 .build();
 
         log.info("[Async Batch] Step 1: Requesting AI script generation for targetDate={}", targetDate);
-        AiScriptResponseDto scriptResponse = aiClientService.requestScriptGeneration(aiRequest);
+        AiScriptResponseDto scriptResponse;
+        try {
+            scriptResponse = aiClientService.requestScriptGeneration(aiRequest);
+        } catch (Exception e) {
+            log.error("[Async Batch] AI 스크립트 생성 요청 실패, 배치 중단: {}", e.getMessage());
+            return;
+        }
 
-        if (scriptResponse == null || scriptResponse.getScripts() == null || scriptResponse.getScripts().isEmpty()) {
+        if (scriptResponse.getScripts() == null || scriptResponse.getScripts().isEmpty()) {
             log.warn("[Async Batch] No scripts returned from AI server for targetDate={}", targetDate);
             return;
         }
@@ -89,11 +95,6 @@ public class InternalBatchService {
                 TtsRequestDto ttsPayload = scriptService.getTtsPayloadFromScript(scriptId);
 
                 TtsResponseDto ttsResponse = aiClientService.requestTtsGeneration(ttsPayload);
-
-                if (ttsResponse == null) {
-                    log.warn("[Async Batch] TTS response null for scriptId={}", scriptId);
-                    continue;
-                }
 
                 String audioUrl = ttsResponse.getAudioUrl() != null ? ttsResponse.getAudioUrl() : "";
                 int durationSec = ttsResponse.getDurationSec() != null ? ttsResponse.getDurationSec().intValue() : 0;
