@@ -1,5 +1,6 @@
 package com.komcast.be.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -19,6 +20,11 @@ public class TtsResponseDto {
 
     @JsonProperty("durationSec")
     private Double durationSec;
+
+    @JsonProperty("durationSeconds")
+    public Double getDurationSeconds() {
+        return durationSec;
+    }
 
     private List<TtsSegmentItem> segments;
 
@@ -50,6 +56,7 @@ public class TtsResponseDto {
         @JsonProperty("industry_code")
         private String industryCode;
 
+        @JsonIgnore
         public String getTargetCode() {
             if (stockCode != null) return stockCode;
             if (industryCode != null) return industryCode;
