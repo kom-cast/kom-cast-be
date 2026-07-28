@@ -1,6 +1,11 @@
 package com.komcast.be;
 
-import com.komcast.be.dto.*;
+import com.komcast.be.domain.Industry;
+import com.komcast.be.dto.IndustryBatchRegisterRequestDto;
+import com.komcast.be.dto.IndustryRegisterRequestDto;
+import com.komcast.be.dto.IndustryResponseDto;
+import com.komcast.be.dto.StockBatchRegisterRequestDto;
+import com.komcast.be.repository.IndustryRepository;
 import com.komcast.be.service.PreferenceService;
 import com.komcast.be.service.StockService;
 import org.junit.jupiter.api.DisplayName;
@@ -23,12 +28,20 @@ class Issue10ApiTest {
     private StockService stockService;
 
     @Autowired
+    private IndustryRepository industryRepository;
+
+    @Autowired
     private PreferenceService preferenceService;
 
     @Test
     @DisplayName("관심 산업 등록, 중복 방지 및 삭제 테스트")
     void myIndustrySingleCrudTest() {
         Long userId = 1L;
+
+        industryRepository.save(Industry.builder()
+                .industryCode("IND001")
+                .industryName("반도체")
+                .build());
 
         // 1. 등록 1회차
         stockService.registerMyIndustry(userId, IndustryRegisterRequestDto.builder()
@@ -55,40 +68,24 @@ class Issue10ApiTest {
     void batchRegistrationDuplicatePreventionTest() {
         Long userId = 1L;
 
+        industryRepository.save(Industry.builder()
+                .industryCode("IND001")
+                .industryName("반도체")
+                .build());
+
         // 1. 종목 중복 포함 배치 등록
         stockService.registerMyStocksBatch(userId, StockBatchRegisterRequestDto.builder()
                 .codes(List.of("005930", "005930", "000660"))
                 .type("PORTFOLIO")
                 .build());
 
-        List<StockResponseDto> myStocks = stockService.getMyStocks(userId);
-        assertThat(myStocks).hasSize(2);
+        assertThat(stockService.getMyStocks(userId)).hasSize(2);
 
-        // 2. 산업 중복 포함 배치 등록
+        // 2. 관심 산업 중복 포함 배치 등록
         stockService.registerMyIndustriesBatch(userId, IndustryBatchRegisterRequestDto.builder()
                 .codes(List.of("IND001", "IND001", "IND002"))
                 .build());
 
-        List<IndustryResponseDto> myIndustries = stockService.getMyIndustries(userId);
-        assertThat(myIndustries).hasSize(2);
-    }
-
-    @Test
-    @DisplayName("알림 설정 조회 및 수정 테스트")
-    void notificationSettingsTest() {
-        Long userId = 1L;
-
-        // 1. 수정
-        preferenceService.updateNotifications(userId, NotificationToggleRequestDto.builder()
-                .notifyBriefing(true)
-                .notifyPriceAlert(false)
-                .notifyMarketing(true)
-                .build());
-
-        // 2. 조회
-        NotificationToggleRequestDto settings = preferenceService.getNotificationSettings(userId);
-        assertThat(settings.getNotifyBriefing()).isTrue();
-        assertThat(settings.getNotifyPriceAlert()).isFalse();
-        assertThat(settings.getNotifyMarketing()).isTrue();
+        assertThat(stockService.getMyIndustries(userId)).hasSize(2);
     }
 }

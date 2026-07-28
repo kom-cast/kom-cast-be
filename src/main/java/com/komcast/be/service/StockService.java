@@ -27,23 +27,6 @@ public class StockService {
     private final MarketPriceRepository marketPriceRepository;
     private final UserRepository userRepository;
 
-    private static final Map<String, String> CODE_TO_NAME_MAP = Map.ofEntries(
-            Map.entry("IND001", "반도체"),
-            Map.entry("IND002", "2차전지"),
-            Map.entry("IND003", "바이오/헬스케어"),
-            Map.entry("IND004", "금융"),
-            Map.entry("IND005", "AI/빅테크"),
-            Map.entry("IND006", "자동차"),
-            Map.entry("IND007", "엔터테인먼트"),
-            Map.entry("IND008", "게임"),
-            Map.entry("IND009", "화학"),
-            Map.entry("IND010", "건설/부동산"),
-            Map.entry("IND011", "에너지"),
-            Map.entry("IND012", "소비재"),
-            Map.entry("IND013", "통신"),
-            Map.entry("IND014", "방산")
-    );
-
     public List<StockResponseDto> getAllStocks() {
         List<Stock> dbStocks = stockRepository.findAll();
         return dbStocks.stream()
@@ -149,10 +132,7 @@ public class StockService {
         return userIndustryRepository.findByUserId(user.getId())
                 .stream().map(ui -> {
                     String code = ui.getIndustryCode();
-                    String name = ui.getIndustryName();
-                    if (name == null || name.equals(code)) {
-                        name = masterCodeToName.getOrDefault(code, CODE_TO_NAME_MAP.getOrDefault(code, code));
-                    }
+                    String name = ui.getIndustryName() != null ? ui.getIndustryName() : masterCodeToName.getOrDefault(code, code);
                     return IndustryResponseDto.builder()
                             .code(code)
                             .name(name)
@@ -178,9 +158,6 @@ public class StockService {
             } else if (masterNameToCode.containsKey(val)) {
                 code = masterNameToCode.get(val);
                 name = val;
-            } else if (CODE_TO_NAME_MAP.containsKey(val)) {
-                code = val;
-                name = CODE_TO_NAME_MAP.get(val);
             }
 
             if (!userIndustryRepository.existsByUserIdAndIndustryCode(user.getId(), code)) {
@@ -213,9 +190,6 @@ public class StockService {
                     } else if (masterNameToCode.containsKey(val)) {
                         code = masterNameToCode.get(val);
                         name = val;
-                    } else if (CODE_TO_NAME_MAP.containsKey(val)) {
-                        code = val;
-                        name = CODE_TO_NAME_MAP.get(val);
                     }
 
                     if (!userIndustryRepository.existsByUserIdAndIndustryCode(user.getId(), code)) {
