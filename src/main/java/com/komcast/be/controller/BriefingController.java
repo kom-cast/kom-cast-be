@@ -11,7 +11,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-@Tag(name = "03. Briefings", description = "AI 브리핑 오디오 및 대본 조회/보관함 API")
+@Tag(name = "03. Briefings", description = "AI 브리핑 오디오 및 대본 조회/생성/보관함 API")
 @RestController
 @RequestMapping("/api/v1/briefings")
 @RequiredArgsConstructor
@@ -24,6 +24,14 @@ public class BriefingController {
     public ResponseEntity<BriefingResponseDto> getTodayBriefing(
             @RequestHeader(value = "X-User-Id", defaultValue = "1") String userId) {
         return ResponseEntity.ok(briefingService.getTodayBriefing(userId));
+    }
+
+    @Operation(summary = "단독 맞춤 브리핑 수동 생성 요청 (유저/시연용)", description = "특정 사용자에 대해 AI 스크립트 작성 -> DB 스크립트 쿼리 -> TTS 오디오 수동 합성을 즉시 실행하고 결과 브리핑을 반환합니다.")
+    @PostMapping("/generate")
+    public ResponseEntity<BriefingResponseDto> generateUserBriefing(
+            @RequestHeader(value = "X-User-Id", defaultValue = "1") String userId,
+            @RequestParam(name = "runDate", required = false) String runDate) {
+        return ResponseEntity.ok(briefingService.generateUserBriefing(userId, runDate));
     }
 
     @Operation(summary = "과거 브리핑 보관함 이력 조회 (페이징)", description = "보관함 페이지에서 과거 생성된 브리핑 이력들을 페이징 단위로 목록 조회합니다.")
