@@ -1,8 +1,13 @@
 package com.komcast.be;
 
+import com.komcast.be.domain.Notification;
+import com.komcast.be.domain.User;
+import com.komcast.be.domain.UserPlan;
 import com.komcast.be.dto.NotificationResponseDto;
 import com.komcast.be.dto.NotificationToggleRequestDto;
 import com.komcast.be.dto.PreferencesResponseDto;
+import com.komcast.be.repository.NotificationRepository;
+import com.komcast.be.repository.UserRepository;
 import com.komcast.be.service.NotificationService;
 import com.komcast.be.service.PreferenceService;
 import org.junit.jupiter.api.DisplayName;
@@ -25,12 +30,18 @@ class PreferenceAndNotificationServiceTest {
     @Autowired
     private NotificationService notificationService;
 
+    @Autowired
+    private NotificationRepository notificationRepository;
+
+    @Autowired
+    private UserRepository userRepository;
+
     @Test
-    @DisplayName("알림 수신 동의 설정 변경이 DB에 정상 반영되어야 함")
-    void updateNotifications_updatesDBPreference() {
+    @DisplayName("환경설정 알림 토글 업데이트 테스트")
+    void updateNotifications_success() {
         Object userId = 1L;
 
-        // 1. 알림 설정 변경 (notifyBriefing = false, notifyPriceAlert = false, notifyMarketing = true)
+        // 1. 알림 설정 업데이트
         preferenceService.updateNotifications(userId, NotificationToggleRequestDto.builder()
                 .notifyBriefing(false)
                 .notifyPriceAlert(false)
@@ -49,6 +60,15 @@ class PreferenceAndNotificationServiceTest {
     void getNotifications_maintainsConsistentIdsAndReadState() {
         Object userId = 1L;
 
+        User user = preferenceService.getOrCreateUser(userId);
+        notificationRepository.save(Notification.builder()
+                .user(user)
+                .type("BRIEFING")
+                .title("테스트 알림")
+                .description("내용")
+                .isRead(false)
+                .build());
+
         // 1. 첫 조회 시 DB에 저장 및 ID 부여
         List<NotificationResponseDto> list1 = notificationService.getNotifications(userId);
         assertThat(list1).isNotEmpty();
@@ -58,9 +78,9 @@ class PreferenceAndNotificationServiceTest {
         List<NotificationResponseDto> list2 = notificationService.getNotifications(userId);
         assertThat(list2.get(0).getId()).isEqualTo(firstId);
 
-        // 3. 읽음 처리
+        // 3. 읽음 처리 수행
         notificationService.markAsRead(userId, firstId);
         List<NotificationResponseDto> list3 = notificationService.getNotifications(userId);
-        assertThat(list3.stream().filter(n -> n.getId().equals(firstId)).findFirst().get().getUnread()).isFalse();
+        assertThat(list3.get(0).getUnread()).isFalse();
     }
 }

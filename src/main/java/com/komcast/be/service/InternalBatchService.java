@@ -27,6 +27,7 @@ public class InternalBatchService {
 
     private final UserRepository userRepository;
     private final AiClientService aiClientService;
+    private final ScriptService scriptService;
     private final AudioRepository audioRepository;
     private final AudioSegmentRepository audioSegmentRepository;
     private final NotificationRepository notificationRepository;
@@ -34,7 +35,6 @@ public class InternalBatchService {
     @Async
     @Transactional
     public void processBatchCompletionAsync(BatchCompletionRequestDto dto) {
-        // 수집 데이터는 어제 날짜(24시간) 기준 데이터이므로 기본값은 어제 날짜(minusDays(1))로 설정
         LocalDate targetDate = (dto != null && dto.getRunDate() != null)
                 ? LocalDate.parse(dto.getRunDate())
                 : LocalDate.now().minusDays(1);
@@ -50,7 +50,6 @@ public class InternalBatchService {
             users = List.of(defaultUser);
         }
 
-        // 어제 00:00:00+09:00 ~ 오늘 00:00:00+09:00 (24시간 포맷)
         String startAt = targetDate.toString() + "T00:00:00+09:00";
         String endAt = targetDate.plusDays(1).toString() + "T00:00:00+09:00";
 
@@ -67,75 +66,73 @@ public class InternalBatchService {
         log.info("[Async Batch] Step 1: Requesting AI script generation for targetDate={}", targetDate);
         AiScriptResponseDto scriptResponse = aiClientService.requestScriptGeneration(aiRequest);
 
-        for (User user : users) {
-            log.info("[Async Batch] Step 2: Requesting TTS generation for userId={}", user.getId());
-            
-            // AI TTS 생성 요청 객체 구축 (script_type / sectionType 포함 규격)
-            TtsRequestDto ttsPayload = TtsRequestDto.builder()
-                    .scriptId(UUID.randomUUID().toString())
-                    .sections(List.of(
-                            TtsRequestDto.TtsSection.builder()
-                                    .sectionType("STOCK")
-                                    .target(TtsRequestDto.TtsTarget.builder().type("STOCK").stockCode("005930").build())
-                                    .lines(List.of(
-                                            TtsRequestDto.TtsLine.builder().speaker("코스").text("오늘 삼성전자 주가는 2% 상승했습니다.").build(),
-                                            TtsRequestDto.TtsLine.builder().speaker("코미").text("네, 외국인 매수세가 강했네요.").build()
-                                    ))
-                                    .build()
-                    ))
-                    .build();
+        if (scriptResponse == null || scriptResponse.getScripts() == null || scriptResponse.getScripts().isEmpty()) {
+            log.warn("[Async Batch] No scripts returned from AI server for targetDate={}", targetDate);
+            return;
+        }
 
-            TtsResponseDto ttsResponse = aiClientService.requestTtsGeneration(ttsPayload);
-
-            String audioUrl = (ttsResponse != null && ttsResponse.getAudioUrl() != null)
-                    ? ttsResponse.getAudioUrl()
-                    : "https://komcast-storage.ncp.com/audio/sample_briefing.mp3";
-            int durationSec = (ttsResponse != null && ttsResponse.getDurationSec() != null)
-                    ? ttsResponse.getDurationSec().intValue()
-                    : 600;
-
-            // Step 3: DB에 Audio 레코드 저장
-            Audio audio = audioRepository.save(Audio.builder()
-                    .user(user)
-                    .audioType("DAILY_BRIEFING")
-                    .audioUrl(audioUrl)
-                    .durationSeconds(durationSec)
-                    .build());
-
-            if (ttsResponse != null && ttsResponse.getSegments() != null && !ttsResponse.getSegments().isEmpty()) {
-                int order = 1;
-                for (TtsResponseDto.TtsSegmentItem item : ttsResponse.getSegments()) {
-                    String targetCode = item.getTarget() != null ? item.getTarget().getTargetCode() : null;
-                    audioSegmentRepository.save(AudioSegment.builder()
-                            .audio(audio)
-                            .segmentOrder(order++)
-                            .speaker(item.getSpeaker() != null ? item.getSpeaker() : "코스")
-                            .stockCode(targetCode)
-                            .text(item.getText() != null ? item.getText() : "")
-                            .startSec(item.getStartSec() != null ? item.getStartSec() : 0.0)
-                            .build());
-                }
-            } else {
-                audioSegmentRepository.save(AudioSegment.builder()
-                        .audio(audio)
-                        .segmentOrder(1)
-                        .speaker("코스")
-                        .stockCode("005930")
-                        .text("오늘 삼성전자 주가는 2% 상승했습니다.")
-                        .startSec(0.0)
-                        .build());
+        for (AiScriptResponseDto.GeneratedScriptItem scriptItem : scriptResponse.getScripts()) {
+            if (scriptItem.getScriptId() == null || scriptItem.getUserId() == null) {
+                continue;
             }
 
-            // Step 4: 유저 알림 발송 ("오늘의 브리핑이 준비됐어요")
-            notificationRepository.save(Notification.builder()
-                    .user(user)
-                    .type("BRIEFING")
-                    .title("오늘의 브리핑이 준비됐어요")
-                    .description("새로운 맞춤형 아침 브리핑을 들어보세요")
-                    .isRead(false)
-                    .build());
-            
-            log.info("[Async Batch] Step 5: Audio & Notification successfully saved for userId={}", user.getId());
+            try {
+                UUID scriptId = UUID.fromString(scriptItem.getScriptId());
+                UUID userId = UUID.fromString(scriptItem.getUserId());
+
+                User user = userRepository.findById(userId).orElse(null);
+                if (user == null) {
+                    continue;
+                }
+
+                log.info("[Async Batch] Step 2: Querying script from DB for scriptId={} and generating TTS", scriptId);
+                TtsRequestDto ttsPayload = scriptService.getTtsPayloadFromScript(scriptId);
+
+                TtsResponseDto ttsResponse = aiClientService.requestTtsGeneration(ttsPayload);
+
+                if (ttsResponse == null) {
+                    log.warn("[Async Batch] TTS response null for scriptId={}", scriptId);
+                    continue;
+                }
+
+                String audioUrl = ttsResponse.getAudioUrl() != null ? ttsResponse.getAudioUrl() : "";
+                int durationSec = ttsResponse.getDurationSec() != null ? ttsResponse.getDurationSec().intValue() : 0;
+
+                Audio audio = audioRepository.save(Audio.builder()
+                        .user(user)
+                        .audioType("DAILY_BRIEFING")
+                        .audioUrl(audioUrl)
+                        .durationSeconds(durationSec)
+                        .build());
+
+                if (ttsResponse.getSegments() != null) {
+                    int order = 1;
+                    for (TtsResponseDto.TtsSegmentItem item : ttsResponse.getSegments()) {
+                        String targetCode = item.getTarget() != null ? item.getTarget().getTargetCode() : null;
+                        audioSegmentRepository.save(AudioSegment.builder()
+                                .audio(audio)
+                                .segmentOrder(order++)
+                                .speaker(item.getSpeaker() != null ? item.getSpeaker() : "코스")
+                                .stockCode(targetCode)
+                                .text(item.getText() != null ? item.getText() : "")
+                                .startSec(item.getStartSec() != null ? item.getStartSec() : 0.0)
+                                .build());
+                    }
+                }
+
+                notificationRepository.save(Notification.builder()
+                        .user(user)
+                        .type("BRIEFING")
+                        .title("오늘의 브리핑이 준비됐어요")
+                        .description("새로운 맞춤형 아침 브리핑을 들어보세요")
+                        .isRead(false)
+                        .build());
+
+                log.info("[Async Batch] Audio & Notification successfully saved for userId={}", userId);
+
+            } catch (Exception e) {
+                log.error("[Async Batch] Error processing scriptId={}: {}", scriptItem.getScriptId(), e.getMessage(), e);
+            }
         }
 
         log.info("[Async Batch] All async AI script, TTS, DB persistence, and notification dispatches finished for targetDate={}", targetDate);
