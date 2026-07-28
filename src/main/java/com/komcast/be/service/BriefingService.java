@@ -71,71 +71,47 @@ public class BriefingService {
     }
 
     @Transactional
-    public BriefingResponseDto generateUserBriefing(Object userId, String runDate) {
+    public BriefingResponseDto generateBriefingByScriptId(Object userId, UUID scriptId) {
         User user = preferenceService.getOrCreateUser(userId);
-        LocalDate targetDate = (runDate != null && !runDate.trim().isEmpty())
-                ? LocalDate.parse(runDate.trim())
-                : LocalDate.now().minusDays(1);
 
-        String startAt = targetDate.toString() + "T00:00:00+09:00";
-        String endAt = targetDate.plusDays(1).toString() + "T00:00:00+09:00";
+        log.info("[Briefing Service] Requesting TTS generation for scriptId={} and user={}", scriptId, user.getId());
 
-        AiScriptRequestDto aiRequest = AiScriptRequestDto.builder()
-                .startAt(startAt)
-                .endAt(endAt)
-                .userIds(List.of(user.getId().toString()))
-                .build();
+        TtsRequestDto ttsPayload = scriptService.getTtsPayloadFromScript(scriptId);
+        TtsResponseDto ttsResponse = aiClientService.requestTtsGeneration(ttsPayload);
 
-        log.info("[Briefing Service] Requesting manual AI script generation for user={}", user.getId());
-        AiScriptResponseDto scriptResponse = aiClientService.requestScriptGeneration(aiRequest);
+        if (ttsResponse != null) {
+            String audioUrl = ttsResponse.getAudioUrl() != null ? ttsResponse.getAudioUrl() : "";
+            int durationSec = ttsResponse.getDurationSec() != null ? ttsResponse.getDurationSec().intValue() : 0;
 
-        if (scriptResponse != null && scriptResponse.getScripts() != null && !scriptResponse.getScripts().isEmpty()) {
-            for (AiScriptResponseDto.GeneratedScriptItem scriptItem : scriptResponse.getScripts()) {
-                if (scriptItem.getScriptId() != null) {
-                    try {
-                        UUID scriptId = UUID.fromString(scriptItem.getScriptId());
-                        TtsRequestDto ttsPayload = scriptService.getTtsPayloadFromScript(scriptId);
-                        TtsResponseDto ttsResponse = aiClientService.requestTtsGeneration(ttsPayload);
+            Audio audio = audioRepository.save(Audio.builder()
+                    .user(user)
+                    .audioType("DAILY_BRIEFING")
+                    .audioUrl(audioUrl)
+                    .durationSeconds(durationSec)
+                    .build());
 
-                        if (ttsResponse != null) {
-                            String audioUrl = ttsResponse.getAudioUrl() != null ? ttsResponse.getAudioUrl() : "";
-                            int durationSec = ttsResponse.getDurationSec() != null ? ttsResponse.getDurationSec().intValue() : 0;
-
-                            Audio audio = audioRepository.save(Audio.builder()
-                                    .user(user)
-                                    .audioType("DAILY_BRIEFING")
-                                    .audioUrl(audioUrl)
-                                    .durationSeconds(durationSec)
-                                    .build());
-
-                            if (ttsResponse.getSegments() != null) {
-                                int order = 1;
-                                for (TtsResponseDto.TtsSegmentItem item : ttsResponse.getSegments()) {
-                                    String targetCode = item.getTarget() != null ? item.getTarget().getTargetCode() : null;
-                                    audioSegmentRepository.save(AudioSegment.builder()
-                                            .audio(audio)
-                                            .segmentOrder(order++)
-                                            .speaker(item.getSpeaker() != null ? item.getSpeaker() : "코스")
-                                            .stockCode(targetCode)
-                                            .text(item.getText() != null ? item.getText() : "")
-                                            .startSec(item.getStartSec() != null ? item.getStartSec() : 0.0)
-                                            .build());
-                                }
-                            }
-
-                            notificationRepository.save(Notification.builder()
-                                    .user(user)
-                                    .type("BRIEFING")
-                                    .title("오늘의 브리핑이 준비됐어요")
-                                    .description("새로운 맞춤형 아침 브리핑을 들어보세요")
-                                    .isRead(false)
-                                    .build());
-                        }
-                    } catch (Exception e) {
-                        log.error("[Briefing Service] Error generating manual briefing for user={}: {}", user.getId(), e.getMessage(), e);
-                    }
+            if (ttsResponse.getSegments() != null) {
+                int order = 1;
+                for (TtsResponseDto.TtsSegmentItem item : ttsResponse.getSegments()) {
+                    String targetCode = item.getTarget() != null ? item.getTarget().getTargetCode() : null;
+                    audioSegmentRepository.save(AudioSegment.builder()
+                            .audio(audio)
+                            .segmentOrder(order++)
+                            .speaker(item.getSpeaker() != null ? item.getSpeaker() : "코스")
+                            .stockCode(targetCode)
+                            .text(item.getText() != null ? item.getText() : "")
+                            .startSec(item.getStartSec() != null ? item.getStartSec() : 0.0)
+                            .build());
                 }
             }
+
+            notificationRepository.save(Notification.builder()
+                    .user(user)
+                    .type("BRIEFING")
+                    .title("오늘의 브리핑이 준비됐어요")
+                    .description("새로운 맞춤형 아침 브리핑을 들어보세요")
+                    .isRead(false)
+                    .build());
         }
 
         return getTodayBriefing(userId);
