@@ -3,6 +3,7 @@ package com.komcast.be.service;
 import com.komcast.be.dto.AiScriptRequestDto;
 import com.komcast.be.dto.AiScriptResponseDto;
 import com.komcast.be.dto.TtsResponseDto;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -17,6 +18,7 @@ import org.springframework.web.server.ResponseStatusException;
 public class AiClientService {
 
     private final RestTemplate restTemplate = new RestTemplate();
+    private final ObjectMapper objectMapper;
 
     @Value("${external.ai-server-url:http://localhost:8000}")
     private String aiServerUrl;
@@ -44,7 +46,12 @@ public class AiClientService {
 
     public TtsResponseDto requestTtsGeneration(Object scriptPayload) {
         String url = aiServerUrl + "/briefings";
-        log.info("[AI Client] Sending HTTP POST request for TTS generation: url={}", url);
+        try {
+            String payloadJson = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(scriptPayload);
+            log.info("[AI Client] Sending HTTP POST request for TTS generation: url={}\nRequest Body:\n{}", url, payloadJson);
+        } catch (Exception e) {
+            log.info("[AI Client] Sending HTTP POST request for TTS generation: url={}, payload={}", url, scriptPayload);
+        }
         try {
             TtsResponseDto response = restTemplate.postForObject(url, scriptPayload, TtsResponseDto.class);
             if (response == null) {
