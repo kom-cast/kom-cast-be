@@ -176,7 +176,7 @@ public class PreferenceService {
                         .user(user)
                         .briefingDuration(10)
                         .voice("jieun")
-                        .freeText("반도체 위주로 대본을 생성해주세요.")
+                        .freeText(null)
                         .notifyBriefing(true)
                         .notifyPriceAlert(true)
                         .notifyMarketing(false)
