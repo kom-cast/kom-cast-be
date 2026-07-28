@@ -4,9 +4,9 @@ spring:
 
 springdoc:
   swagger-ui:
-    path: /swagger-ui.html
+    path: /api/swagger-ui.html
   api-docs:
-    path: /v3/api-docs
+    path: /api/v3/api-docs
 
 external:
   ai-server-url: ${AI_SERVER_URL:http://localhost:8000}
