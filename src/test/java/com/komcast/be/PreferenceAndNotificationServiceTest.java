@@ -28,7 +28,7 @@ class PreferenceAndNotificationServiceTest {
     @Test
     @DisplayName("알림 수신 동의 설정 변경이 DB에 정상 반영되어야 함")
     void updateNotifications_updatesDBPreference() {
-        Long userId = 1L;
+        Object userId = 1L;
 
         // 1. 알림 설정 변경 (notifyBriefing = false, notifyPriceAlert = false, notifyMarketing = true)
         preferenceService.updateNotifications(userId, NotificationToggleRequestDto.builder()
@@ -47,12 +47,12 @@ class PreferenceAndNotificationServiceTest {
     @Test
     @DisplayName("알림 목록 조회 시 고정된 DB ID가 유지되어야 하며 읽음 처리가 반영되어야 함")
     void getNotifications_maintainsConsistentIdsAndReadState() {
-        Long userId = 1L;
+        Object userId = 1L;
 
         // 1. 첫 조회 시 DB에 저장 및 ID 부여
         List<NotificationResponseDto> list1 = notificationService.getNotifications(userId);
         assertThat(list1).isNotEmpty();
-        Long firstId = list1.get(0).getId();
+        Object firstId = list1.get(0).getId();
 
         // 2. 두 번째 조회 시에도 동일한 ID 유지
         List<NotificationResponseDto> list2 = notificationService.getNotifications(userId);

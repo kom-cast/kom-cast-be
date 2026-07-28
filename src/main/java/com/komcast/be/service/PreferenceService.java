@@ -20,10 +20,9 @@ public class PreferenceService {
     private final UserPreferenceRepository userPreferenceRepository;
     private final UserStockRepository userStockRepository;
     private final UserIndustryRepository userIndustryRepository;
-    private final UserKeywordRepository userKeywordRepository;
     private final StockService stockService;
 
-    public PreferencesResponseDto getPreferences(Long userId) {
+    public PreferencesResponseDto getPreferences(Object userId) {
         User user = getOrCreateUser(userId);
         UserPreference pref = getOrCreatePreference(user);
 
@@ -45,18 +44,13 @@ public class PreferenceService {
                             .build();
                 }).collect(Collectors.toList());
 
-        List<String> includeKeywords = userKeywordRepository.findByUserIdAndType(user.getId(), "INCLUDE")
-                .stream().map(UserKeyword::getKeyword).collect(Collectors.toList());
-        List<String> excludeKeywords = userKeywordRepository.findByUserIdAndType(user.getId(), "EXCLUDE")
-                .stream().map(UserKeyword::getKeyword).collect(Collectors.toList());
-
         return PreferencesResponseDto.builder()
                 .nickname(user.getNickname())
                 .portfolio(portfolio)
                 .interests(interests)
                 .industries(industries)
-                .includeKeywords(includeKeywords)
-                .excludeKeywords(excludeKeywords)
+                .includeKeywords(List.of())
+                .excludeKeywords(List.of())
                 .freeText(pref.getFreeText())
                 .briefingDuration(String.valueOf(pref.getBriefingDuration()))
                 .voice(pref.getVoice())
@@ -67,7 +61,7 @@ public class PreferenceService {
     }
 
     @Transactional
-    public void updatePreferences(Long userId, PreferencesUpdateRequestDto dto) {
+    public void updatePreferences(Object userId, PreferencesUpdateRequestDto dto) {
         User user = getOrCreateUser(userId);
         if (dto.getNickname() != null) {
             user.updateNickname(dto.getNickname());
@@ -117,39 +111,17 @@ public class PreferenceService {
                         .build());
             }
         }
-
-        if (dto.getIncludeKeywords() != null || dto.getExcludeKeywords() != null) {
-            userKeywordRepository.deleteByUserId(user.getId());
-            if (dto.getIncludeKeywords() != null) {
-                for (String kw : dto.getIncludeKeywords()) {
-                    userKeywordRepository.save(UserKeyword.builder()
-                            .user(user)
-                            .keyword(kw)
-                            .type("INCLUDE")
-                            .build());
-                }
-            }
-            if (dto.getExcludeKeywords() != null) {
-                for (String kw : dto.getExcludeKeywords()) {
-                    userKeywordRepository.save(UserKeyword.builder()
-                            .user(user)
-                            .keyword(kw)
-                            .type("EXCLUDE")
-                            .build());
-                }
-            }
-        }
     }
 
     @Transactional
-    public void updateVoice(Long userId, String voice) {
+    public void updateVoice(Object userId, String voice) {
         User user = getOrCreateUser(userId);
         UserPreference pref = getOrCreatePreference(user);
         pref.updateVoice(voice);
     }
 
     @Transactional
-    public void updateDuration(Long userId, String duration) {
+    public void updateDuration(Object userId, String duration) {
         User user = getOrCreateUser(userId);
         UserPreference pref = getOrCreatePreference(user);
         try {
@@ -157,7 +129,7 @@ public class PreferenceService {
         } catch (NumberFormatException ignored) {}
     }
 
-    public NotificationToggleRequestDto getNotificationSettings(Long userId) {
+    public NotificationToggleRequestDto getNotificationSettings(Object userId) {
         User user = getOrCreateUser(userId);
         UserPreference pref = getOrCreatePreference(user);
         return NotificationToggleRequestDto.builder()
@@ -168,16 +140,15 @@ public class PreferenceService {
     }
 
     @Transactional
-    public void updateNotifications(Long userId, NotificationToggleRequestDto dto) {
+    public void updateNotifications(Object userId, NotificationToggleRequestDto dto) {
         User user = getOrCreateUser(userId);
         UserPreference pref = getOrCreatePreference(user);
         pref.updateNotifications(dto.getNotifyBriefing(), dto.getNotifyPriceAlert(), dto.getNotifyMarketing());
     }
 
     @Transactional
-    public User getOrCreateUser(Long userId) {
-        return userRepository.findById(userId)
-                .or(() -> userRepository.findAll().stream().findFirst())
+    public User getOrCreateUser(Object userIdObj) {
+        return userRepository.findAll().stream().findFirst()
                 .orElseGet(() -> userRepository.save(User.builder()
                         .nickname("민준")
                         .plan("FREE")

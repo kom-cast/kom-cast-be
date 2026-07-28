@@ -28,14 +28,14 @@ public class StockController {
     @Operation(summary = "나의 보유/관심 종목 및 시세 조회", description = "사용자가 등록한 보유/관심 종목 목록 및 실시간 시세를 반환합니다.")
     @GetMapping("/stocks/my")
     public ResponseEntity<List<StockResponseDto>> getMyStocks(
-            @RequestHeader(value = "X-User-Id", defaultValue = "1") Long userId) {
+            @RequestHeader(value = "X-User-Id", defaultValue = "1") String userId) {
         return ResponseEntity.ok(stockService.getMyStocks(userId));
     }
 
     @Operation(summary = "보유/관심 종목 등록", description = "새로운 종목을 사용자의 보유/관심 목록에 추가합니다.")
     @PostMapping("/stocks/my")
     public ResponseEntity<ApiResponseDto> registerMyStock(
-            @RequestHeader(value = "X-User-Id", defaultValue = "1") Long userId,
+            @RequestHeader(value = "X-User-Id", defaultValue = "1") String userId,
             @RequestBody StockRegisterRequestDto dto) {
         stockService.registerMyStock(userId, dto);
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -45,7 +45,7 @@ public class StockController {
     @Operation(summary = "보유/관심 종목 일괄 등록", description = "온보딩 UX 지원용으로 여러 종목 코드를 일괄 등록합니다.")
     @PostMapping("/stocks/my/batch")
     public ResponseEntity<ApiResponseDto> registerMyStocksBatch(
-            @RequestHeader(value = "X-User-Id", defaultValue = "1") Long userId,
+            @RequestHeader(value = "X-User-Id", defaultValue = "1") String userId,
             @RequestBody StockBatchRegisterRequestDto dto) {
         stockService.registerMyStocksBatch(userId, dto);
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -55,7 +55,7 @@ public class StockController {
     @Operation(summary = "보유/관심 종목 삭제", description = "사용자의 목록에서 특정 종목을 해제합니다.")
     @DeleteMapping("/stocks/my/{code}")
     public ResponseEntity<ApiResponseDto> deleteMyStock(
-            @RequestHeader(value = "X-User-Id", defaultValue = "1") Long userId,
+            @RequestHeader(value = "X-User-Id", defaultValue = "1") String userId,
             @PathVariable("code") String code) {
         stockService.deleteMyStock(userId, code);
         return ResponseEntity.ok(ApiResponseDto.success("Stock " + code + " removed."));
@@ -70,14 +70,14 @@ public class StockController {
     @Operation(summary = "나의 관심 산업 분야 목록 조회", description = "사용자가 등록한 관심 산업 분야 목록을 반환합니다.")
     @GetMapping("/industries/my")
     public ResponseEntity<List<IndustryResponseDto>> getMyIndustries(
-            @RequestHeader(value = "X-User-Id", defaultValue = "1") Long userId) {
+            @RequestHeader(value = "X-User-Id", defaultValue = "1") String userId) {
         return ResponseEntity.ok(stockService.getMyIndustries(userId));
     }
 
     @Operation(summary = "관심 산업 분야 등록", description = "새로운 관심 산업 분야를 등록합니다.")
     @PostMapping("/industries/my")
     public ResponseEntity<ApiResponseDto> registerMyIndustry(
-            @RequestHeader(value = "X-User-Id", defaultValue = "1") Long userId,
+            @RequestHeader(value = "X-User-Id", defaultValue = "1") String userId,
             @RequestBody IndustryRegisterRequestDto dto) {
         stockService.registerMyIndustry(userId, dto);
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -87,7 +87,7 @@ public class StockController {
     @Operation(summary = "관심 산업 분야 일괄 등록", description = "온보딩 UX 지원용으로 여러 산업 코드를 일괄 등록합니다.")
     @PostMapping("/industries/my/batch")
     public ResponseEntity<ApiResponseDto> registerMyIndustriesBatch(
-            @RequestHeader(value = "X-User-Id", defaultValue = "1") Long userId,
+            @RequestHeader(value = "X-User-Id", defaultValue = "1") String userId,
             @RequestBody IndustryBatchRegisterRequestDto dto) {
         stockService.registerMyIndustriesBatch(userId, dto);
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -97,7 +97,7 @@ public class StockController {
     @Operation(summary = "관심 산업 분야 삭제", description = "사용자의 목록에서 특정 관심 산업 분야를 해제합니다.")
     @DeleteMapping("/industries/my/{code}")
     public ResponseEntity<ApiResponseDto> deleteMyIndustry(
-            @RequestHeader(value = "X-User-Id", defaultValue = "1") Long userId,
+            @RequestHeader(value = "X-User-Id", defaultValue = "1") String userId,
             @PathVariable("code") String code) {
         stockService.deleteMyIndustry(userId, code);
         return ResponseEntity.ok(ApiResponseDto.success("Industry " + code + " removed."));

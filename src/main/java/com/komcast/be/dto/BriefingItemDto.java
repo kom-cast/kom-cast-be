@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Builder
 public class BriefingItemDto {
-    private Long id;
+    private Object id;
     private String date;
     private String headline;
     private String duration;

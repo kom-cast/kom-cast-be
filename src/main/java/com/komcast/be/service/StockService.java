@@ -4,8 +4,8 @@ import com.komcast.be.domain.User;
 import com.komcast.be.domain.UserIndustry;
 import com.komcast.be.domain.UserStock;
 import com.komcast.be.dto.*;
-import com.komcast.be.repository.UserRepository;
 import com.komcast.be.repository.UserIndustryRepository;
+import com.komcast.be.repository.UserRepository;
 import com.komcast.be.repository.UserStockRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -63,7 +63,7 @@ public class StockService {
         return MASTER_INDUSTRIES;
     }
 
-    public List<StockResponseDto> getMyStocks(Long userId) {
+    public List<StockResponseDto> getMyStocks(Object userId) {
         User user = getOrCreateUser(userId);
         List<UserStock> userStocks = userStockRepository.findByUserId(user.getId());
 
@@ -81,7 +81,7 @@ public class StockService {
     }
 
     @Transactional
-    public void registerMyStock(Long userId, StockRegisterRequestDto dto) {
+    public void registerMyStock(Object userId, StockRegisterRequestDto dto) {
         User user = getOrCreateUser(userId);
         if (!userStockRepository.existsByUserIdAndStockCode(user.getId(), dto.getCode())) {
             userStockRepository.save(UserStock.builder()
@@ -93,7 +93,7 @@ public class StockService {
     }
 
     @Transactional
-    public void registerMyStocksBatch(Long userId, StockBatchRegisterRequestDto dto) {
+    public void registerMyStocksBatch(Object userId, StockBatchRegisterRequestDto dto) {
         User user = getOrCreateUser(userId);
         if (dto.getCodes() != null && !dto.getCodes().isEmpty()) {
             String type = dto.getType() != null ? dto.getType() : "PORTFOLIO";
@@ -111,12 +111,12 @@ public class StockService {
     }
 
     @Transactional
-    public void deleteMyStock(Long userId, String code) {
+    public void deleteMyStock(Object userId, String code) {
         User user = getOrCreateUser(userId);
         userStockRepository.deleteByUserIdAndStockCode(user.getId(), code);
     }
 
-    public List<IndustryResponseDto> getMyIndustries(Long userId) {
+    public List<IndustryResponseDto> getMyIndustries(Object userId) {
         User user = getOrCreateUser(userId);
         Map<String, String> masterCodeToName = MASTER_INDUSTRIES.stream()
                 .collect(Collectors.toMap(IndustryResponseDto::getCode, IndustryResponseDto::getName, (a, b) -> a));
@@ -133,7 +133,7 @@ public class StockService {
     }
 
     @Transactional
-    public void registerMyIndustry(Long userId, IndustryRegisterRequestDto dto) {
+    public void registerMyIndustry(Object userId, IndustryRegisterRequestDto dto) {
         User user = getOrCreateUser(userId);
         Map<String, String> masterCodeToName = MASTER_INDUSTRIES.stream()
                 .collect(Collectors.toMap(IndustryResponseDto::getCode, IndustryResponseDto::getName, (a, b) -> a));
@@ -161,7 +161,7 @@ public class StockService {
     }
 
     @Transactional
-    public void registerMyIndustriesBatch(Long userId, IndustryBatchRegisterRequestDto dto) {
+    public void registerMyIndustriesBatch(Object userId, IndustryBatchRegisterRequestDto dto) {
         User user = getOrCreateUser(userId);
         if (dto.getCodes() != null && !dto.getCodes().isEmpty()) {
             Map<String, String> masterCodeToName = MASTER_INDUSTRIES.stream()
@@ -193,15 +193,14 @@ public class StockService {
     }
 
     @Transactional
-    public void deleteMyIndustry(Long userId, String code) {
+    public void deleteMyIndustry(Object userId, String code) {
         User user = getOrCreateUser(userId);
         userIndustryRepository.deleteByUserIdAndIndustryCode(user.getId(), code);
     }
 
     @Transactional
-    public User getOrCreateUser(Long userId) {
-        return userRepository.findById(userId)
-                .or(() -> userRepository.findAll().stream().findFirst())
+    public User getOrCreateUser(Object userIdObj) {
+        return userRepository.findAll().stream().findFirst()
                 .orElseGet(() -> userRepository.save(User.builder()
                         .nickname("민준")
                         .plan("FREE")
