@@ -36,7 +36,18 @@ public class BriefingService {
         LocalDate today = LocalDate.now();
 
         Audio audio = audioRepository.findTopByUserIdAndAudioTypeOrderByCreatedAtDesc(user.getId(), "DAILY_BRIEFING")
-                .orElseGet(() -> createDummyAudio(user));
+                .orElse(null);
+
+        if (audio == null) {
+            return BriefingResponseDto.builder()
+                    .id(null)
+                    .date(today.toString())
+                    .headline("오늘의 브리핑이 준비 중입니다.")
+                    .audioUrl("")
+                    .durationSeconds(0)
+                    .segments(List.of())
+                    .build();
+        }
 
         List<AudioSegment> segments = audioSegmentRepository.findByAudioIdOrderBySegmentOrderAsc(audio.getId());
 
@@ -47,7 +58,7 @@ public class BriefingService {
         return BriefingResponseDto.builder()
                 .id(audio.getId())
                 .date(today.toString())
-                .headline("삼성전자·SK하이닉스 실적 서프라이즈")
+                .headline("오늘의 AI 개인화 맞춤 브리핑")
                 .audioUrl(audio.getAudioUrl())
                 .durationSeconds(audio.getDurationSeconds())
                 .segments(segmentDtos)
@@ -57,12 +68,16 @@ public class BriefingService {
     public Page<BriefingItemDto> getBriefings(Object userId, Pageable pageable) {
         User user = preferenceService.getOrCreateUser(userId);
         Audio audio = audioRepository.findTopByUserIdAndAudioTypeOrderByCreatedAtDesc(user.getId(), "DAILY_BRIEFING")
-                .orElseGet(() -> createDummyAudio(user));
+                .orElse(null);
+
+        if (audio == null) {
+            return new PageImpl<>(List.of(), pageable, 0);
+        }
 
         BriefingItemDto item = BriefingItemDto.builder()
                 .id(audio.getId())
                 .date(LocalDate.now().toString())
-                .headline("삼성전자·SK하이닉스 실적 서프라이즈")
+                .headline("오늘의 AI 개인화 맞춤 브리핑")
                 .duration(String.valueOf(audio.getDurationSeconds() / 60))
                 .build();
 
@@ -83,7 +98,7 @@ public class BriefingService {
         return BriefingResponseDto.builder()
                 .id(audio.getId())
                 .date(LocalDate.now().toString())
-                .headline("삼성전자·SK하이닉스 실적 서프라이즈")
+                .headline("오늘의 AI 개인화 맞춤 브리핑")
                 .audioUrl(audio.getAudioUrl())
                 .durationSeconds(audio.getDurationSeconds())
                 .segments(segmentDtos)
@@ -145,48 +160,9 @@ public class BriefingService {
                     .endSec(end)
                     .build());
 
-            current = end + 0.05; // 단어 간 미세 공백(0.05초)
+            current = end + 0.05;
         }
 
         return words;
-    }
-
-    @Transactional
-    public Audio createDummyAudio(User user) {
-        Audio audio = audioRepository.save(Audio.builder()
-                .user(user)
-                .audioType("DAILY_BRIEFING")
-                .audioUrl("https://komcast-storage.ncp.com/audio/sample_briefing.mp3")
-                .durationSeconds(600)
-                .build());
-
-        audioSegmentRepository.save(AudioSegment.builder()
-                .audio(audio)
-                .segmentOrder(1)
-                .speaker("코스")
-                .stockCode("005930")
-                .text("삼성전자 관련 주요 소식으로 오늘의 브리핑을 시작합니다.")
-                .startSec(0.0)
-                .build());
-
-        audioSegmentRepository.save(AudioSegment.builder()
-                .audio(audio)
-                .segmentOrder(2)
-                .speaker("코미")
-                .stockCode("005930")
-                .text("삼성전자가 2분기 잠정 실적을 발표했습니다. 매출은 전년 동기 대비 23% 증가한 74조원을 기록했습니다.")
-                .startSec(108.0)
-                .build());
-
-        audioSegmentRepository.save(AudioSegment.builder()
-                .audio(audio)
-                .segmentOrder(3)
-                .speaker("코스")
-                .stockCode("000660")
-                .text("SK하이닉스는 메모리 가격 상승에 힘입어 목표주가가 상향 조정됐습니다.")
-                .startSec(240.0)
-                .build());
-
-        return audio;
     }
 }

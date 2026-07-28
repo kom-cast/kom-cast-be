@@ -25,11 +25,6 @@ public class NotificationService {
         User user = preferenceService.getOrCreateUser(userId);
         List<Notification> notifications = notificationRepository.findByUserIdOrderByCreatedAtDesc(user.getId());
 
-        if (notifications.isEmpty()) {
-            createDummyNotifications(user);
-            notifications = notificationRepository.findByUserIdOrderByCreatedAtDesc(user.getId());
-        }
-
         return notifications.stream()
                 .map(n -> NotificationResponseDto.builder()
                         .id(n.getId() != null ? n.getId().toString() : UUID.randomUUID().toString())
@@ -62,31 +57,5 @@ public class NotificationService {
         for (Notification n : unreadList) {
             n.markAsRead();
         }
-    }
-
-    private void createDummyNotifications(User user) {
-        notificationRepository.save(Notification.builder()
-                .user(user)
-                .type("BRIEFING")
-                .title("오늘의 브리핑이 준비됐어요")
-                .description("새로운 맞춤형 아침 브리핑을 들어보세요")
-                .isRead(false)
-                .build());
-
-        notificationRepository.save(Notification.builder()
-                .user(user)
-                .type("STOCK_ALERT")
-                .title("삼성전자 +5% 급등")
-                .description("보유종목 삼성전자가 급등했습니다")
-                .isRead(false)
-                .build());
-
-        notificationRepository.save(Notification.builder()
-                .user(user)
-                .type("VOICE_UPDATE")
-                .title("새로운 목소리가 추가됐어요")
-                .description("마이페이지에서 새 목소리를 들어보세요")
-                .isRead(true)
-                .build());
     }
 }
