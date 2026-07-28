@@ -69,11 +69,12 @@ public class InternalBatchService {
         for (User user : users) {
             log.info("[Async Batch] Step 2: Requesting TTS generation for userId={}", user.getId());
             
-            // AI TTS 생성 요청 객체 구축 (Sections 규격)
+            // AI TTS 생성 요청 객체 구축 (script_type / sectionType 포함 규격)
             TtsRequestDto ttsPayload = TtsRequestDto.builder()
                     .scriptId(UUID.randomUUID().toString())
                     .sections(List.of(
                             TtsRequestDto.TtsSection.builder()
+                                    .sectionType("STOCK")
                                     .target(TtsRequestDto.TtsTarget.builder().type("STOCK").stockCode("005930").build())
                                     .lines(List.of(
                                             TtsRequestDto.TtsLine.builder().speaker("코스").text("오늘 삼성전자 주가는 2% 상승했습니다.").build(),
