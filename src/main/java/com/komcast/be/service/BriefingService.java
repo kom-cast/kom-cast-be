@@ -97,15 +97,7 @@ public class BriefingService {
             log.info("[Briefing Service] audioUrl received: {}", audioUrlToSave);
         }
 
-        int durationSec = ttsResponse.getDurationSec() != null ? ttsResponse.getDurationSec().intValue() : 0;
-
-        Audio audio = audioRepository.save(Audio.builder()
-                .user(user)
-                .audioType("DAILY_BRIEFING")
-                .audioUrl(audioUrlToSave)
-                .durationSeconds(durationSec)
-                .build());
-
+        // 백엔드에서의 중복 오디오 저장을 제거 (인공지능 서버에서 저장함)
 
         notificationRepository.save(Notification.builder()
                 .user(user)

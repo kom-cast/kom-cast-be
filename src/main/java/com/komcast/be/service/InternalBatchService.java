@@ -97,29 +97,8 @@ public class InternalBatchService {
                 TtsResponseDto ttsResponse = aiClientService.requestTtsGeneration(ttsPayload);
 
                 String audioUrl = ttsResponse.getAudioUrl() != null ? ttsResponse.getAudioUrl() : "";
-                int durationSec = ttsResponse.getDurationSec() != null ? ttsResponse.getDurationSec().intValue() : 0;
-
-                Audio audio = audioRepository.save(Audio.builder()
-                        .user(user)
-                        .audioType("DAILY_BRIEFING")
-                        .audioUrl(audioUrl)
-                        .durationSeconds(durationSec)
-                        .build());
-
-                if (ttsResponse.getSegments() != null) {
-                    int order = 1;
-                    for (TtsResponseDto.TtsSegmentItem item : ttsResponse.getSegments()) {
-                        String targetCode = item.getTarget() != null ? item.getTarget().getTargetCode() : null;
-                        audioSegmentRepository.save(AudioSegment.builder()
-                                .audio(audio)
-                                .segmentOrder(order++)
-                                .speaker(item.getSpeaker() != null ? item.getSpeaker() : "코스")
-                                .stockCode(targetCode)
-                                .text(item.getText() != null ? item.getText() : "")
-                                .startSec(item.getStartSec() != null ? item.getStartSec() : 0.0)
-                                .build());
-                    }
-                }
+                // 백엔드에서의 중복 오디오 저장을 제거 (인공지능 서버에서 저장함)
+                // 백엔드에서의 중복 오디오 및 세그먼트 저장을 제거 (인공지능 서버에서 모두 저장함)
 
                 notificationRepository.save(Notification.builder()
                         .user(user)
