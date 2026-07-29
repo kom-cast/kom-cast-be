@@ -189,19 +189,14 @@ public class BriefingService {
     }
 
     private BriefingSegmentDto mapToSegmentDto(AudioSegment s, Integer totalDuration) {
-        String code = s.getStockCode();
+        String stockCode = s.getStockCode();
+        String industryCode = s.getIndustryCode();
         String type = "USER";
-        String stockCode = null;
-        String industryCode = null;
 
-        if (code != null && !code.isEmpty()) {
-            if (code.startsWith("IND")) {
-                type = "INDUSTRY";
-                industryCode = code;
-            } else {
-                type = "STOCK";
-                stockCode = code;
-            }
+        if (industryCode != null && !industryCode.isEmpty()) {
+            type = "INDUSTRY";
+        } else if (stockCode != null && !stockCode.isEmpty()) {
+            type = "STOCK";
         }
 
         double startSec = (s.getStartSec() != null) ? s.getStartSec() : 0.0;

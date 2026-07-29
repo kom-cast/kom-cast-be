@@ -30,6 +30,9 @@ public class AudioSegment extends BaseTimeEntity {
     @Column(name = "stock_code", length = 20)
     private String stockCode;
 
+    @Column(name = "industry_code", length = 20)
+    private String industryCode;
+
     @Column(name = "text", nullable = false, columnDefinition = "TEXT")
     private String text;
 
