@@ -34,4 +34,7 @@ public class Script {
 
     @Column(name = "created_at", nullable = false)
     private ZonedDateTime createdAt;
+
+    @Column(name = "title", length = 255)
+    private String title;
 }
