@@ -1,10 +1,12 @@
 package com.komcast.be.service;
 
 import com.komcast.be.domain.Audio;
+import com.komcast.be.domain.AudioBinary;
 import com.komcast.be.domain.AudioSegment;
 import com.komcast.be.domain.Notification;
 import com.komcast.be.domain.User;
 import com.komcast.be.dto.*;
+import com.komcast.be.repository.AudioBinaryRepository;
 import com.komcast.be.repository.AudioRepository;
 import com.komcast.be.repository.AudioSegmentRepository;
 import com.komcast.be.repository.NotificationRepository;
@@ -13,8 +15,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -29,6 +33,7 @@ import java.util.stream.Collectors;
 public class BriefingService {
 
     private final AudioRepository audioRepository;
+    private final AudioBinaryRepository audioBinaryRepository;
     private final AudioSegmentRepository audioSegmentRepository;
     private final NotificationRepository notificationRepository;
     private final PreferenceService preferenceService;
@@ -60,11 +65,14 @@ public class BriefingService {
                 .map(s -> mapToSegmentDto(s, audio.getDurationSeconds()))
                 .collect(Collectors.toList());
 
+        // audio_url이 UUID 형태면 /audio 다운로드 URL로 변환, 아니면 그대로 사용
+        String audioUrl = resolveAudioUrl(audio);
+
         return BriefingResponseDto.builder()
                 .id(audio.getId())
                 .date(today.toString())
                 .headline("오늘의 AI 개인화 맞춤 브리핑")
-                .audioUrl(audio.getAudioUrl())
+                .audioUrl(audioUrl)
                 .durationSeconds(audio.getDurationSeconds())
                 .segments(segmentDtos)
                 .build();
@@ -79,42 +87,68 @@ public class BriefingService {
         TtsRequestDto ttsPayload = scriptService.getTtsPayloadFromScript(scriptId);
         TtsResponseDto ttsResponse = aiClientService.requestTtsGeneration(ttsPayload);
 
-        if (ttsResponse != null) {
-            String audioUrl = ttsResponse.getAudioUrl() != null ? ttsResponse.getAudioUrl() : "";
-            int durationSec = ttsResponse.getDurationSec() != null ? ttsResponse.getDurationSec().intValue() : 0;
-
-            Audio audio = audioRepository.save(Audio.builder()
-                    .user(user)
-                    .audioType("DAILY_BRIEFING")
-                    .audioUrl(audioUrl)
-                    .durationSeconds(durationSec)
-                    .build());
-
-            if (ttsResponse.getSegments() != null) {
-                int order = 1;
-                for (TtsResponseDto.TtsSegmentItem item : ttsResponse.getSegments()) {
-                    String targetCode = item.getTarget() != null ? item.getTarget().getTargetCode() : null;
-                    audioSegmentRepository.save(AudioSegment.builder()
-                            .audio(audio)
-                            .segmentOrder(order++)
-                            .speaker(item.getSpeaker() != null ? item.getSpeaker() : "코스")
-                            .stockCode(targetCode)
-                            .text(item.getText() != null ? item.getText() : "")
-                            .startSec(item.getStartSec() != null ? item.getStartSec() : 0.0)
-                            .build());
-                }
-            }
-
-            notificationRepository.save(Notification.builder()
-                    .user(user)
-                    .type("BRIEFING")
-                    .title("오늘의 브리핑이 준비됐어요")
-                    .description("새로운 맞춤형 아침 브리핑을 들어보세요")
-                    .isRead(false)
-                    .build());
+        // audio_binary_id가 있으면 UUID를 audio_url로 저장, 없으면 audioUrl 저장
+        String audioUrlToSave = "";
+        if (ttsResponse.getAudioBinaryId() != null && !ttsResponse.getAudioBinaryId().isBlank()) {
+            audioUrlToSave = ttsResponse.getAudioBinaryId();
+            log.info("[Briefing Service] audio_binary_id received: {}", audioUrlToSave);
+        } else if (ttsResponse.getAudioUrl() != null && !ttsResponse.getAudioUrl().isBlank()) {
+            audioUrlToSave = ttsResponse.getAudioUrl();
+            log.info("[Briefing Service] audioUrl received: {}", audioUrlToSave);
         }
 
+        int durationSec = ttsResponse.getDurationSec() != null ? ttsResponse.getDurationSec().intValue() : 0;
+
+        Audio audio = audioRepository.save(Audio.builder()
+                .user(user)
+                .audioType("DAILY_BRIEFING")
+                .audioUrl(audioUrlToSave)
+                .durationSeconds(durationSec)
+                .build());
+
+        if (ttsResponse.getSegments() != null) {
+            int order = 1;
+            for (TtsResponseDto.TtsSegmentItem item : ttsResponse.getSegments()) {
+                String targetCode = item.getTarget() != null ? item.getTarget().getTargetCode() : null;
+                audioSegmentRepository.save(AudioSegment.builder()
+                        .audio(audio)
+                        .segmentOrder(order++)
+                        .speaker(item.getSpeaker() != null ? item.getSpeaker() : "코스")
+                        .stockCode(targetCode)
+                        .text(item.getText() != null ? item.getText() : "")
+                        .startSec(item.getStartSec() != null ? item.getStartSec() : 0.0)
+                        .build());
+            }
+        }
+
+        notificationRepository.save(Notification.builder()
+                .user(user)
+                .type("BRIEFING")
+                .title("오늘의 브리핑이 준비됐어요")
+                .description("새로운 맞춤형 아침 브리핑을 들어보세요")
+                .isRead(false)
+                .build());
+
         return getTodayBriefing(userId);
+    }
+
+    public byte[] getAudioBinary(UUID audioId) {
+        Audio audio = audioRepository.findById(audioId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "브리핑을 찾을 수 없습니다: " + audioId));
+
+        String audioUrl = audio.getAudioUrl();
+        if (audioUrl == null || audioUrl.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "오디오 바이너리가 없습니다.");
+        }
+
+        try {
+            UUID binaryId = UUID.fromString(audioUrl);
+            AudioBinary binary = audioBinaryRepository.findById(binaryId)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "오디오 바이너리를 찾을 수 없습니다: " + binaryId));
+            return binary.getData();
+        } catch (IllegalArgumentException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "오디오 바이너리가 DB에 저장된 형태가 아닙니다. (audioUrl=" + audioUrl + ")");
+        }
     }
 
     public Page<BriefingItemDto> getBriefings(Object userId, Pageable pageable) {
@@ -147,14 +181,31 @@ public class BriefingService {
                 .map(s -> mapToSegmentDto(s, audio.getDurationSeconds()))
                 .collect(Collectors.toList());
 
+        String audioUrl = resolveAudioUrl(audio);
+
         return BriefingResponseDto.builder()
                 .id(audio.getId())
                 .date(LocalDate.now().toString())
                 .headline("오늘의 AI 개인화 맞춤 브리핑")
-                .audioUrl(audio.getAudioUrl())
+                .audioUrl(audioUrl)
                 .durationSeconds(audio.getDurationSeconds())
                 .segments(segmentDtos)
                 .build();
+    }
+
+    /**
+     * audio_url이 UUID 형태이면 → 바이너리 다운로드 API URL로 변환
+     * 일반 URL이면 → 그대로 반환
+     */
+    private String resolveAudioUrl(Audio audio) {
+        String rawUrl = audio.getAudioUrl();
+        if (rawUrl == null || rawUrl.isBlank()) return "";
+        try {
+            UUID.fromString(rawUrl);
+            return "/api/v1/briefings/" + audio.getId() + "/audio";
+        } catch (IllegalArgumentException e) {
+            return rawUrl;
+        }
     }
 
     private BriefingSegmentDto mapToSegmentDto(AudioSegment s, Integer totalDuration) {

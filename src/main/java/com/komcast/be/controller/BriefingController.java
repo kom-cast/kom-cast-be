@@ -8,6 +8,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -57,5 +59,16 @@ public class BriefingController {
     @GetMapping("/{id}")
     public ResponseEntity<BriefingResponseDto> getBriefingById(@PathVariable("id") String id) {
         return ResponseEntity.ok(briefingService.getBriefingById(id));
+    }
+
+    @Operation(summary = "브리핑 오디오 바이너리 다운로드", description = "audio_binaries 테이블에 저장된 MP3 바이너리를 스트리밍으로 반환합니다. (Object Storage 임시 대안)")
+    @GetMapping("/{id}/audio")
+    public ResponseEntity<byte[]> getAudioBinary(@PathVariable("id") UUID id) {
+        byte[] data = briefingService.getAudioBinary(id);
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.parseMediaType("audio/mpeg"));
+        headers.setContentLength(data.length);
+        headers.set(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"briefing.mp3\"");
+        return ResponseEntity.ok().headers(headers).body(data);
     }
 }

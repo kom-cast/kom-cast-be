@@ -15,13 +15,16 @@ import java.util.List;
 @Builder
 public class TtsResponseDto {
 
+    @JsonProperty("audio_binary_id")
+    private String audioBinaryId;
+
     @JsonProperty("audioUrl")
     private String audioUrl;
 
     @JsonProperty("durationSec")
     private Double durationSec;
 
-    @JsonProperty("durationSeconds")
+    @JsonIgnore
     public Double getDurationSeconds() {
         return durationSec;
     }
