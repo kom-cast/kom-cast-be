@@ -31,7 +31,7 @@ public class NotificationService {
                         .type(n.getType())
                         .title(n.getTitle())
                         .description(n.getDescription())
-                        .time("방금 전")
+                        .time(formatRelativeTime(n.getCreatedAt()))
                         .unread(!n.getIsRead())
                         .build())
                 .collect(Collectors.toList());
@@ -56,6 +56,24 @@ public class NotificationService {
         List<Notification> unreadList = notificationRepository.findByUserIdAndIsReadFalseOrderByCreatedAtDesc(user.getId());
         for (Notification n : unreadList) {
             n.markAsRead();
+        }
+    }
+
+    private String formatRelativeTime(java.time.LocalDateTime createdAt) {
+        if (createdAt == null) {
+            return "방금 전";
+        }
+        java.time.Duration duration = java.time.Duration.between(createdAt, java.time.LocalDateTime.now());
+        long seconds = duration.getSeconds();
+
+        if (seconds < 60) {
+            return "방금 전";
+        } else if (seconds < 3600) {
+            return (seconds / 60) + "분 전";
+        } else if (seconds < 86400) {
+            return (seconds / 3600) + "시간 전";
+        } else {
+            return (seconds / 86400) + "일 전";
         }
     }
 }
