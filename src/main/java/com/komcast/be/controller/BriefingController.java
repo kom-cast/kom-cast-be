@@ -6,13 +6,18 @@ import com.komcast.be.service.BriefingService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.support.ResourceRegion;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpRange;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 @Tag(name = "03. Briefings", description = "AI 브리핑 오디오 및 대본 조회/생성/보관함 API")
@@ -63,12 +68,36 @@ public class BriefingController {
 
     @Operation(summary = "브리핑 오디오 바이너리 다운로드", description = "audio_binaries 테이블에 저장된 MP3 바이너리를 스트리밍으로 반환합니다. (Object Storage 임시 대안)")
     @GetMapping("/{id}/audio")
-    public ResponseEntity<byte[]> getAudioBinary(@PathVariable("id") UUID id) {
+    public ResponseEntity<ResourceRegion> getAudioBinary(
+            @PathVariable("id") UUID id,
+            @RequestHeader HttpHeaders headers) {
         byte[] data = briefingService.getAudioBinary(id);
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.parseMediaType("audio/mpeg"));
-        headers.setContentLength(data.length);
-        headers.set(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"briefing.mp3\"");
-        return ResponseEntity.ok().headers(headers).body(data);
+        ByteArrayResource resource = new ByteArrayResource(data);
+        long contentLength = data.length;
+
+        // NOTE: 프론트에서 오디오 탐색(seek)이 되려면 브라우저가 Range 요청으로
+        // 특정 구간만 다시 요청했을 때 206 Partial Content + Content-Range로
+        // 응답해줘야 함. byte[]를 그냥 200으로 통째로 내려주면 브라우저가
+        // Accept-Ranges를 못 받아 seekable 구간을 0으로 인식하고, currentTime을
+        // 옮겨도 재생이 0초로 리셋됨.
+        List<HttpRange> ranges = headers.getRange();
+        HttpStatus status;
+        ResourceRegion region;
+        if (ranges.isEmpty()) {
+            status = HttpStatus.OK;
+            region = new ResourceRegion(resource, 0, contentLength);
+        } else {
+            status = HttpStatus.PARTIAL_CONTENT;
+            HttpRange range = ranges.get(0);
+            long start = range.getRangeStart(contentLength);
+            long end = range.getRangeEnd(contentLength);
+            region = new ResourceRegion(resource, start, end - start + 1);
+        }
+
+        return ResponseEntity.status(status)
+                .contentType(MediaType.parseMediaType("audio/mpeg"))
+                .header(HttpHeaders.ACCEPT_RANGES, "bytes")
+                .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"briefing.mp3\"")
+                .body(region);
     }
 }
