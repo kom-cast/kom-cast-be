@@ -17,7 +17,6 @@ public class AudioBinary {
     @Id
     private UUID id;
 
-    @Lob
     @Column(name = "data", nullable = false, columnDefinition = "BYTEA")
     private byte[] data;
 
