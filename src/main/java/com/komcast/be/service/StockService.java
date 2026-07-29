@@ -34,15 +34,15 @@ public class StockService {
         Page<Stock> dbStocks;
         if (keyword != null && !keyword.trim().isEmpty()) {
             String kw = keyword.trim();
-            dbStocks = stockRepository.findByCorpNameContainingOrStockCodeContaining(kw, kw, pageable);
+            dbStocks = stockRepository.searchKospi200Stocks(kw, pageable);
         } else {
-            dbStocks = stockRepository.findAll(pageable);
+            dbStocks = stockRepository.findByIsKospi200True(pageable);
         }
         return dbStocks.map(this::mapToStockResponseDto);
     }
 
     public List<StockResponseDto> getAllStocks() {
-        List<Stock> dbStocks = stockRepository.findAll();
+        List<Stock> dbStocks = stockRepository.findByIsKospi200True();
         return dbStocks.stream()
                 .map(this::mapToStockResponseDto)
                 .collect(Collectors.toList());
