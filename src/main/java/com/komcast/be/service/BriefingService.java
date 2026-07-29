@@ -106,20 +106,6 @@ public class BriefingService {
                 .durationSeconds(durationSec)
                 .build());
 
-        if (ttsResponse.getSegments() != null) {
-            int order = 1;
-            for (TtsResponseDto.TtsSegmentItem item : ttsResponse.getSegments()) {
-                String targetCode = item.getTarget() != null ? item.getTarget().getTargetCode() : null;
-                audioSegmentRepository.save(AudioSegment.builder()
-                        .audio(audio)
-                        .segmentOrder(order++)
-                        .speaker(item.getSpeaker() != null ? item.getSpeaker() : "코스")
-                        .stockCode(targetCode)
-                        .text(item.getText() != null ? item.getText() : "")
-                        .startSec(item.getStartSec() != null ? item.getStartSec() : 0.0)
-                        .build());
-            }
-        }
 
         notificationRepository.save(Notification.builder()
                 .user(user)
