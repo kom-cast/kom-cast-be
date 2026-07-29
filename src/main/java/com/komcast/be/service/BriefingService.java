@@ -139,21 +139,15 @@ public class BriefingService {
 
     public Page<BriefingItemDto> getBriefings(Object userId, Pageable pageable) {
         User user = preferenceService.getOrCreateUser(userId);
-        Audio audio = audioRepository.findTopByUserIdAndAudioTypeOrderByCreatedAtDesc(user.getId(), "DAILY_BRIEFING")
-                .orElse(null);
+        
+        Page<Audio> audioPage = audioRepository.findByUserIdAndAudioTypeOrderByCreatedAtDesc(user.getId(), "DAILY_BRIEFING", pageable);
 
-        if (audio == null) {
-            return new PageImpl<>(List.of(), pageable, 0);
-        }
-
-        BriefingItemDto item = BriefingItemDto.builder()
+        return audioPage.map(audio -> BriefingItemDto.builder()
                 .id(audio.getId())
-                .date(LocalDate.now().toString())
+                .date(audio.getCreatedAt() != null ? audio.getCreatedAt().toLocalDate().toString() : LocalDate.now().toString())
                 .headline("오늘의 AI 개인화 맞춤 브리핑")
                 .duration(String.valueOf(audio.getDurationSeconds() / 60))
-                .build();
-
-        return new PageImpl<>(List.of(item), pageable, 1);
+                .build());
     }
 
     public BriefingResponseDto getBriefingById(Object briefingId) {

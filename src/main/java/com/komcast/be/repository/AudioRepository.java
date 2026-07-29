@@ -10,4 +10,5 @@ import java.util.UUID;
 @Repository
 public interface AudioRepository extends JpaRepository<Audio, UUID> {
     Optional<Audio> findTopByUserIdAndAudioTypeOrderByCreatedAtDesc(UUID userId, String audioType);
+    org.springframework.data.domain.Page<Audio> findByUserIdAndAudioTypeOrderByCreatedAtDesc(UUID userId, String audioType, org.springframework.data.domain.Pageable pageable);
 }
