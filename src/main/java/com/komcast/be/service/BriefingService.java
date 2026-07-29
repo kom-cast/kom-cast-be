@@ -71,7 +71,7 @@ public class BriefingService {
         return BriefingResponseDto.builder()
                 .id(audio.getId())
                 .date(today.toString())
-                .headline("오늘의 AI 개인화 맞춤 브리핑")
+                .headline(audio.getTitle() != null ? audio.getTitle() : "오늘의 AI 개인화 맞춤 브리핑")
                 .audioUrl(audioUrl)
                 .durationSeconds(audio.getDurationSeconds())
                 .segments(segmentDtos)
@@ -137,7 +137,7 @@ public class BriefingService {
         return audioPage.map(audio -> BriefingItemDto.builder()
                 .id(audio.getId())
                 .date(audio.getCreatedAt() != null ? audio.getCreatedAt().toLocalDate().toString() : LocalDate.now().toString())
-                .headline("오늘의 AI 개인화 맞춤 브리핑")
+                .headline(audio.getTitle() != null ? audio.getTitle() : "오늘의 AI 개인화 맞춤 브리핑")
                 .duration(String.valueOf(audio.getDurationSeconds() / 60))
                 .build());
     }
@@ -158,7 +158,7 @@ public class BriefingService {
         return BriefingResponseDto.builder()
                 .id(audio.getId())
                 .date(audio.getCreatedAt() != null ? audio.getCreatedAt().toLocalDate().toString() : LocalDate.now().toString())
-                .headline("오늘의 AI 개인화 맞춤 브리핑")
+                .headline(audio.getTitle() != null ? audio.getTitle() : "오늘의 AI 개인화 맞춤 브리핑")
                 .audioUrl(audioUrl)
                 .durationSeconds(audio.getDurationSeconds())
                 .segments(segmentDtos)

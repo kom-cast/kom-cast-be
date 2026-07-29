@@ -33,4 +33,7 @@ public class Audio extends BaseTimeEntity {
 
     @Column(name = "duration_seconds", nullable = false)
     private Integer durationSeconds;
+
+    @Column(name = "title", length = 255)
+    private String title;
 }
