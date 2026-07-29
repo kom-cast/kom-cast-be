@@ -165,7 +165,7 @@ public class BriefingService {
 
         return BriefingResponseDto.builder()
                 .id(audio.getId())
-                .date(LocalDate.now().toString())
+                .date(audio.getCreatedAt() != null ? audio.getCreatedAt().toLocalDate().toString() : LocalDate.now().toString())
                 .headline("오늘의 AI 개인화 맞춤 브리핑")
                 .audioUrl(audioUrl)
                 .durationSeconds(audio.getDurationSeconds())
