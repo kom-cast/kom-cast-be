@@ -25,7 +25,7 @@ public class ScriptService {
     private final ScriptSectionRepository scriptSectionRepository;
     private final SectionLineRepository sectionLineRepository;
 
-    public TtsRequestDto getTtsPayloadFromScript(UUID scriptId) {
+    public TtsRequestDto getTtsPayloadFromScript(UUID scriptId, UUID userId) {
         Script script = scriptRepository.findById(scriptId)
                 .orElseThrow(() -> new IllegalArgumentException("Script not found in DB with id: " + scriptId));
 
@@ -58,6 +58,7 @@ public class ScriptService {
 
         return TtsRequestDto.builder()
                 .scriptId(script.getId().toString())
+                .userId(userId != null ? userId.toString() : null)
                 .sections(sections)
                 .build();
     }

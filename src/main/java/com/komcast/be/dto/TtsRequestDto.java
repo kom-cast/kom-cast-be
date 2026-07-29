@@ -17,6 +17,9 @@ public class TtsRequestDto {
     @JsonProperty("script_id")
     private String scriptId;
 
+    @JsonProperty("user_id")
+    private String userId;
+
     private List<TtsSection> sections;
 
     @Getter

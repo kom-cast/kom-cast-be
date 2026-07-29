@@ -92,7 +92,7 @@ public class InternalBatchService {
                 }
 
                 log.info("[Async Batch] Step 2: Querying script from DB for scriptId={} and generating TTS", scriptId);
-                TtsRequestDto ttsPayload = scriptService.getTtsPayloadFromScript(scriptId);
+                TtsRequestDto ttsPayload = scriptService.getTtsPayloadFromScript(scriptId, userId);
 
                 TtsResponseDto ttsResponse = aiClientService.requestTtsGeneration(ttsPayload);
 

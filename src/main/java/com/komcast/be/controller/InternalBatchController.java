@@ -41,7 +41,7 @@ public class InternalBatchController {
     @Operation(summary = "DB Script ID 기준 AI TTS 호출 API", description = "DB에 저장된 scriptId를 조회하여 실제 대본(sections, lines)을 조립한 뒤 AI TTS 엔진을 호출합니다.")
     @PostMapping("/scripts/{scriptId}/tts")
     public ResponseEntity<TtsResponseDto> synthesizeTtsByScriptId(@PathVariable("scriptId") UUID scriptId) {
-        TtsRequestDto ttsPayload = scriptService.getTtsPayloadFromScript(scriptId);
+        TtsRequestDto ttsPayload = scriptService.getTtsPayloadFromScript(scriptId, null);
         TtsResponseDto ttsResponse = aiClientService.requestTtsGeneration(ttsPayload);
         return ResponseEntity.ok(ttsResponse);
     }

@@ -84,7 +84,7 @@ public class BriefingService {
 
         log.info("[Briefing Service] Requesting TTS generation for scriptId={} and user={}", scriptId, user.getId());
 
-        TtsRequestDto ttsPayload = scriptService.getTtsPayloadFromScript(scriptId);
+        TtsRequestDto ttsPayload = scriptService.getTtsPayloadFromScript(scriptId, user.getId());
         TtsResponseDto ttsResponse = aiClientService.requestTtsGeneration(ttsPayload);
 
         // audio_binary_id가 있으면 UUID를 audio_url로 저장, 없으면 audioUrl 저장
